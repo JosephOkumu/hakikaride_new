@@ -140,7 +140,7 @@ func createTables(db *sql.DB) error {
 	return nil
 }
 
-// CreateDefaultAdmin creates a default admin user if no admin exists
+// CreateDefaultAdmin creates default admin users if no admin exists
 func CreateDefaultAdmin(db *sql.DB) error {
 	var count int
 	err := db.QueryRow("SELECT COUNT(*) FROM Users WHERE UserType = 'admin'").Scan(&count)
@@ -148,16 +148,45 @@ func CreateDefaultAdmin(db *sql.DB) error {
 		return err
 	}
 
-	if count == 0 {
-		hashedPassword, err := auth.HashPassword("admin123") // Default password
+	if count > 0 {
+		return nil // Admins already exist
+	}
+
+	// Default admin credentials
+	defaultAdmins := []struct {
+		username string
+		email    string
+		password string
+	}{
+		{
+			username: "admin",
+			email:    "admin@hakikaride.com",
+			password: "admin123",
+		},
+		{
+			username: "supervisor",
+			email:    "supervisor@hakikaride.com",
+			password: "supervisor456",
+		},
+		{
+			username: "manager",
+			email:    "manager@hakikaride.com",
+			password: "manager789",
+		},
+	}
+
+	// Create each admin account
+	for _, admin := range defaultAdmins {
+		hashedPassword, err := auth.HashPassword(admin.password)
 		if err != nil {
 			return err
 		}
 
 		_, err = db.Exec(`
 			INSERT INTO Users (Username, Email, PasswordHash, UserType, CreatedAt, IsActive)
-			VALUES ('admin', 'admin@hakikaride.com', ?, 'admin', CURRENT_TIMESTAMP, true)`,
-			hashedPassword)
+			VALUES (?, ?, ?, 'admin', CURRENT_TIMESTAMP, true)`,
+			admin.username, admin.email, hashedPassword)
+
 		if err != nil {
 			return err
 		}

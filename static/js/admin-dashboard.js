@@ -64,7 +64,10 @@ class AdminDashboard {
             const data = await response.json();
             
             if (data.success) {
-                this.updateDashboardStats(data);
+                document.getElementById('activeBusCount').textContent = data.activeBuses;
+                document.getElementById('totalStudents').textContent = data.totalStudents;
+                document.getElementById('activeRoutes').textContent = data.activeRoutes;
+                document.getElementById('issuesCount').textContent = data.issuesCount;
             }
         } catch (error) {
             console.error('Error loading dashboard data:', error);
@@ -189,6 +192,147 @@ class AdminDashboard {
             console.error('Error adding student:', error);
             alert('Failed to add student. Please try again.');
         }
+    }
+
+    async loadDrivers() {
+        try {
+            const response = await fetch('/api/admin/drivers');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.renderDriversTable(data.drivers);
+            }
+        } catch (error) {
+            console.error('Error loading drivers:', error);
+        }
+    }
+
+    async loadRoutes() {
+        try {
+            const response = await fetch('/api/admin/routes');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.renderRoutesTable(data.routes);
+            }
+        } catch (error) {
+            console.error('Error loading routes:', error);
+        }
+    }
+
+    async loadBuses() {
+        try {
+            const response = await fetch('/api/admin/buses');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.renderBusesTable(data.buses);
+            }
+        } catch (error) {
+            console.error('Error loading buses:', error);
+        }
+    }
+
+    renderDriversTable(drivers) {
+        const container = document.getElementById('driversTable');
+        if (!container) return;
+
+        container.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Active Trips</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${drivers.map(driver => `
+                        <tr>
+                            <td>${driver.name}</td>
+                            <td>${driver.phone}</td>
+                            <td>${driver.activeTrips}</td>
+                            <td>
+                                <button class="btn btn-small" onclick="adminDashboard.viewDriverDetails(${driver.id})">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    renderRoutesTable(routes) {
+        const container = document.getElementById('routesTable');
+        if (!container) return;
+
+        container.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Route Name</th>
+                        <th>Description</th>
+                        <th>Assigned Buses</th>
+                        <th>Active Trips</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${routes.map(route => `
+                        <tr>
+                            <td>${route.name}</td>
+                            <td>${route.description}</td>
+                            <td>${route.buses}</td>
+                            <td>${route.activeTrips}</td>
+                            <td>
+                                <button class="btn btn-small" onclick="adminDashboard.viewRouteDetails(${route.id})">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    renderBusesTable(buses) {
+        const container = document.getElementById('busesTable');
+        if (!container) return;
+
+        container.innerHTML = `
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Number Plate</th>
+                        <th>Route</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${buses.map(bus => `
+                        <tr>
+                            <td>${bus.plate}</td>
+                            <td>${bus.route || 'Not Assigned'}</td>
+                            <td>
+                                <span class="status-${bus.status.toLowerCase().replace(' ', '-')}">
+                                    ${bus.status}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-small" onclick="adminDashboard.viewBusDetails(${bus.id})">
+                                    View Details
+                                </button>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
     }
 
     async loadStudents() {

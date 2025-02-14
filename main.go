@@ -60,6 +60,14 @@ func main() {
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.Use(auth.AuthMiddleware)
 
+	// Admin routes
+	adminRouter := apiRouter.PathPrefix("/admin").Subrouter()
+	adminRouter.Use(adminMiddleware)
+	adminRouter.HandleFunc("/dashboard-stats", api.HandleAdminDashboardStats(db)).Methods("GET")
+	adminRouter.HandleFunc("/drivers", api.HandleListDrivers(db)).Methods("GET")
+	adminRouter.HandleFunc("/routes", api.HandleListRoutes(db)).Methods("GET")
+	adminRouter.HandleFunc("/buses", api.HandleListBuses(db)).Methods("GET")
+
 	// Trip routes
 	apiRouter.HandleFunc("/trips/start", api.HandleStartTrip(db)).Methods("POST")
 	apiRouter.HandleFunc("/trips/end", api.HandleEndTrip(db)).Methods("GET")
@@ -134,6 +142,23 @@ func serveParentDashboard(w http.ResponseWriter, r *http.Request) {
 	templ.Execute(w, nil)
 }
 
+func adminMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get user type from context (set by auth middleware)
+		userType, ok := r.Context().Value("userType").(string)
+		if !ok || userType != "admin" {
+			http.Error(w, "Unauthorized: Admin access required", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func serveAdminDashboard(w http.ResponseWriter, r *http.Request) {
-	// TODO: Implement admin dashboard
+	templ, err := template.ParseFiles("templates/admin-dashboard.html")
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+	templ.Execute(w, nil)
 }
