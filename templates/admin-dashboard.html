@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HakikaRide - Admin Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="stylesheet" href="/static/css/admin-dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h2>HakikaRide</h2>
+                <span class="admin-role">Administrator</span>
+            </div>
+            
+            <ul class="nav-links">
+                <li class="active" data-panel="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li data-panel="fleet">
+                    <i class="fas fa-bus"></i>
+                    <span>Fleet Management</span>
+                </li>
+                <li data-panel="students">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Student Management</span>
+                </li>
+                <li data-panel="routes">
+                    <i class="fas fa-route"></i>
+                    <span>Route Management</span>
+                </li>
+                <li data-panel="drivers">
+                    <i class="fas fa-id-card"></i>
+                    <span>Driver Management</span>
+                </li>
+                <li data-panel="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Reports</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <div class="admin-controls">
+                    <button class="btn btn-primary" id="emergencyAlerts">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span class="alert-badge">0</span>
+                    </button>
+                    <div class="admin-profile">
+                        <img src="/static/images/admin-avatar.png" alt="Admin">
+                        <span id="adminName">Admin Name</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Overview Panel -->
+            <div class="panel active" id="dashboardPanel">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-bus"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Buses</h3>
+                            <p id="activeBusCount">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Total Students</h3>
+                            <p id="totalStudents">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Active Routes</h3>
+                            <p id="activeRoutes">0</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3>Issues Today</h3>
+                            <p id="issuesCount">0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="live-tracking-section">
+                    <div class="section-header">
+                        <h2>Live Fleet Tracking</h2>
+                        <button class="btn btn-primary" id="refreshTracking">
+                            <i class="fas fa-sync"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="map-container" id="fleetMap"></div>
+                </div>
+
+                <div class="active-trips">
+                    <h3>Active Trips</h3>
+                    <div class="trips-grid" id="activeTripsGrid">
+                        <!-- Active trips will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fleet Management Panel -->
+            <div class="panel" id="fleetPanel">
+                <div class="panel-header">
+                    <h2>Fleet Management</h2>
+                    <button class="btn btn-primary" id="addBus">
+                        <i class="fas fa-plus"></i> Add New Bus
+                    </button>
+                </div>
+                <div class="fleet-grid" id="fleetGrid">
+                    <!-- Bus cards will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Student Management Panel -->
+            <div class="panel" id="studentsPanel">
+                <div class="panel-header">
+                    <h2>Student Management</h2>
+                    <button class="btn btn-primary" id="addStudent">
+                        <i class="fas fa-plus"></i> Add New Student
+                    </button>
+                </div>
+                <div class="student-filters">
+                    <select id="gradeFilter">
+                        <option value="">All Grades</option>
+                    </select>
+                    <select id="routeFilter">
+                        <option value="">All Routes</option>
+                    </select>
+                    <select id="statusFilter">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+                <div class="students-table-container">
+                    <table class="students-table">
+                        <thead>
+                            <tr>
+                                <th>Admission No</th>
+                                <th>Name</th>
+                                <th>Grade</th>
+                                <th>Route</th>
+                                <th>Parent Contact</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <!-- Student rows will be populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Route Management Panel -->
+            <div class="panel" id="routesPanel">
+                <div class="panel-header">
+                    <h2>Route Management</h2>
+                    <button class="btn btn-primary" id="addRoute">
+                        <i class="fas fa-plus"></i> Add New Route
+                    </button>
+                </div>
+                <div class="routes-grid" id="routesGrid">
+                    <!-- Route cards will be populated dynamically -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Student Modal -->
+    <div class="modal" id="addStudentModal">
+        <div class="modal-content">
+            <h3>Add New Student</h3>
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="firstName" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="lastName" required>
+                </div>
+                <div class="form-group">
+                    <label>Admission Number</label>
+                    <input type="text" name="admNumber" required>
+                </div>
+                <div class="form-group">
+                    <label>Grade</label>
+                    <select name="grade" required>
+                        <!-- Grades will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Route</label>
+                    <select name="route" required>
+                        <!-- Routes will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Pickup Point</label>
+                    <input type="text" name="pickupPoint" required>
+                </div>
+                <div class="form-group">
+                    <label>Parent's Phone</label>
+                    <input type="tel" name="parentPhone" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Student</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addStudentModal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bus Details Modal -->
+    <div class="modal" id="busDetailsModal">
+        <div class="modal-content modal-large">
+            <h3>Bus Details</h3>
+            <div class="bus-details-content">
+                <div class="bus-info">
+                    <h4>Bus Information</h4>
+                    <p>Number Plate: <span id="busNumberPlate"></span></p>
+                    <p>Driver: <span id="busDriver"></span></p>
+                    <p>Route: <span id="busRoute"></span></p>
+                    <p>Status: <span id="busStatus"></span></p>
+                </div>
+                <div class="bus-location-map" id="busLocationMap"></div>
+                <div class="bus-students">
+                    <h4>Students on Board</h4>
+                    <div id="busStudentsList"></div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" onclick="closeModal('busDetailsModal')">Close</button>
+        </div>
+    </div>
+
+    <!-- HERE Maps Scripts -->
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    
+    <!-- Font Awesome -->
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/static/js/admin-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HakikaRide - Driver Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">HakikaRide</div>
+        <div class="driver-info">
+            <span id="driverName"></span>
+            <span class="status-indicator" id="connectionStatus"></span>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Trip Status</h3>
+                <p id="tripStatus">Not Started</p>
+            </div>
+            <div class="stat-card">
+                <h3>Current Speed</h3>
+                <p id="currentSpeed">0 km/h</p>
+            </div>
+            <div class="stat-card">
+                <h3>Students on Board</h3>
+                <p id="studentCount">0</p>
+            </div>
+        </div>
+
+        <div class="map-container" id="mapContainer"></div>
+
+        <div class="driver-controls">
+            <button class="btn btn-primary" id="startTrip">Start Trip</button>
+            <button class="btn btn-primary" style="display: none;" id="endTrip">End Trip</button>
+            <button class="btn btn-primary" id="emergencyButton">Report Emergency</button>
+        </div>
+
+        <div class="card" id="studentList">
+            <h3>Student Checklist</h3>
+            <div id="studentChecklistContainer">
+                <!-- Student checklist will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- HERE Maps Scripts -->
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/static/js/driver-dashboard.js"></script>
+    <script src="/static/js/location-tracker.js"></script>
+</body>
+</html>

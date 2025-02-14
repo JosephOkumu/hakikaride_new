@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HakikaRide - Parent Dashboard</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-brand">HakikaRide</div>
+        <div class="parent-info">
+            <span id="parentName"></span>
+            <button class="btn btn-primary" id="notificationToggle">
+                <span class="notification-badge" id="notificationCount">0</span>
+                <i class="fas fa-bell"></i>
+            </button>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="dashboard-header">
+            <h2>My Children's Bus Tracking</h2>
+            <div class="trip-status-indicator">
+                <span id="busStatus">Waiting for bus updates...</span>
+            </div>
+        </div>
+
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>Bus Location</h3>
+                <p id="busLocation">Updating...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Estimated Arrival</h3>
+                <p id="estimatedArrival">Calculating...</p>
+            </div>
+            <div class="stat-card">
+                <h3>Bus Speed</h3>
+                <p id="currentSpeed">0 km/h</p>
+            </div>
+        </div>
+
+        <div class="map-container" id="mapContainer"></div>
+
+        <div class="children-status-container">
+            <h3>My Children</h3>
+            <div id="childrenList" class="children-list">
+                <!-- Children cards will be populated dynamically -->
+            </div>
+        </div>
+
+        <div class="notifications-panel" id="notificationsPanel">
+            <h3>Recent Updates</h3>
+            <div id="notificationsList">
+                <!-- Notifications will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Driver Modal -->
+    <div class="modal" id="contactModal">
+        <div class="modal-content">
+            <h3>Contact Driver</h3>
+            <p>Driver Name: <span id="driverName">Loading...</span></p>
+            <p>Phone: <span id="driverPhone">Loading...</span></p>
+            <button class="btn btn-primary" onclick="window.location.href='tel:' + document.getElementById('driverPhone').textContent">
+                Call Driver
+            </button>
+            <button class="btn btn-secondary" onclick="document.getElementById('contactModal').style.display='none'">
+                Close
+            </button>
+        </div>
+    </div>
+
+    <!-- HERE Maps Scripts -->
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/static/js/parent-dashboard.js"></script>
+</body>
+</html>
