@@ -91,7 +91,7 @@ func main() {
 	r.HandleFunc("/register", serveRegisterPage)
 	r.HandleFunc("/driver/dashboard", serveDriverDashboard)
 	r.HandleFunc("/parent/dashboard", serveParentDashboard)
-	// r.HandleFunc("/admin/dashboard", serveAdminDashboard)
+	r.HandleFunc("/admin/dashboard", serveAdminDashboard)
 
 	// Start server
 	port := os.Getenv("PORT")
