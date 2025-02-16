@@ -157,10 +157,25 @@ func adminMiddleware(next http.Handler) http.Handler {
 }
 
 func serveAdminDashboard(w http.ResponseWriter, r *http.Request) {
+	// Get dashboard stats
+	stats, err := database.GetDashboardStats(db)
+	if err != nil {
+		log.Printf("Error getting dashboard stats: %v", err)
+		stats = database.DashboardStats{} // Use empty stats in case of error
+	}
+
+	// Prepare template data
+	data := struct {
+		Stats database.DashboardStats
+	}{
+		Stats: stats,
+	}
+
 	templ, err := template.ParseFiles("templates/admin-dashboard.html")
 	if err != nil {
 		http.Error(w, "Error loading template", http.StatusInternalServerError)
 		return
 	}
-	templ.Execute(w, nil)
+
+	templ.Execute(w, data)
 }

@@ -15,10 +15,10 @@
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-container">
-                    <div class="school-initial">S</div>
+                    <div class="school-initial">H</div>
                     <div class="school-info">
-                        <h2>Springfield High</h2>
-                        <span class="admin-email">admin@springfield.edu</span>
+                        <h2>HakikaRide</h2>
+                        <span class="admin-email">admin@hakikaride.com</span>
                     </div>
                 </div>
             </div>
@@ -53,7 +53,38 @@
 
         <!-- Main Content Area -->
         <div class="main-content">
-            <!-- Empty main content area -->
+            <h1 class="dashboard-title">School Dashboard</h1>
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-bus"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Active Buses</h3>
+                        <p class="stat-number">{{.Stats.ActiveBuses}}</p>
+                    </div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Active Routes</h3>
+                        <p class="stat-number">{{.Stats.ActiveRoutes}}</p>
+                    </div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Total Students</h3>
+                        <p class="stat-number">{{.Stats.TotalStudents}}</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
