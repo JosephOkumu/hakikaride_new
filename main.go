@@ -28,6 +28,8 @@ func main() {
 		log.Printf("Warning: .env file not found: %v", err)
 	}
 
+
+
 	// Initialize database
 	var err error
 	db, err = database.InitDB()
