@@ -54,38 +54,62 @@ body {
 /* Stats Container Styles */
 .main-content {
     position: absolute;
-    left: 150px; /* Reduced space from sidebar */
+    left: 110px; /* Reduced space from sidebar */
     right: 0;
     padding: 2rem;
+}
+
+.quick-stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quick-stats-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 1.5rem 0;
+    padding-left: 0.5rem;
 }
 
 .stats-container {
     display: flex;
     flex-direction: row;
-    gap: 2rem;
-    justify-content: flex-start;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0 1rem;
 }
 
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.stat-item {
     display: flex;
     align-items: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    flex: 0 0 300px; /* Don't grow, don't shrink, stay at 300px */
+    padding: 1rem;
+    flex: 1;
+    background-color: #f8f9fa;
+    border-radius: 8px;
 }
 
-.stat-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+.stat-divider {
+    width: 1px;
+    height: 60px;
+    background-color: #e0e0e0;
+    margin: 0 1rem;
+}
+
+
+
+.stat-item:hover {
+    transform: translateY(-2px);
+    transition: transform 0.2s ease;
 }
 
 .stat-icon {
     background: #f0f4ff;
-    width: 60px;
-    height: 60px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -94,7 +118,7 @@ body {
 }
 
 .stat-icon i {
-    font-size: 24px;
+    font-size: 20px;
     color: var(--primary-color);
 }
 
@@ -112,15 +136,15 @@ body {
 
 .stat-details h3 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    font-weight: 700;
+    font-weight: 600;
 }
 
 .stat-number {
-    margin: 0.5rem 0 0;
-    font-size: 1.8rem;
-    font-weight: 600;
+    margin: 0.3rem 0 0;
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--primary-color);
 }
 

@@ -54,34 +54,41 @@
         <!-- Main Content Area -->
         <div class="main-content">
             <h1 class="dashboard-title">School Dashboard</h1>
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-bus"></i>
+            <div class="quick-stats-card">
+                <h2 class="quick-stats-title">Quick Stats</h2>
+                <div class="stats-container">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-bus"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Active Buses</h3>
+                            <p class="stat-number">{{.Stats.ActiveBuses}}</p>
+                        </div>
                     </div>
-                    <div class="stat-details">
-                        <h3>Active Buses</h3>
-                        <p class="stat-number">{{.Stats.ActiveBuses}}</p>
+                    
+                    <div class="stat-divider"></div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-route"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Active Routes</h3>
+                            <p class="stat-number">{{.Stats.ActiveRoutes}}</p>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-route"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Active Routes</h3>
-                        <p class="stat-number">{{.Stats.ActiveRoutes}}</p>
-                    </div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-user-graduate"></i>
-                    </div>
-                    <div class="stat-details">
-                        <h3>Total Students</h3>
-                        <p class="stat-number">{{.Stats.TotalStudents}}</p>
+                    
+                    <div class="stat-divider"></div>
+                    
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-graduate"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Total Students</h3>
+                            <p class="stat-number">{{.Stats.TotalStudents}}</p>
+                        </div>
                     </div>
                 </div>
             </div>
