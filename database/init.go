@@ -90,8 +90,10 @@ func createTables(db *sql.DB) error {
 		FirstName VARCHAR(100) NOT NULL,
 		LastName VARCHAR(100) NOT NULL,
 		PhoneNumber VARCHAR(15) NOT NULL,
+		BusID INTEGER UNIQUE,
 		IsActive BOOLEAN DEFAULT TRUE,
-		FOREIGN KEY (UserID) REFERENCES Users(UserID)
+		FOREIGN KEY (UserID) REFERENCES Users(UserID),
+		FOREIGN KEY (BusID) REFERENCES Buses(BusID)
 	);
 
 	CREATE TABLE IF NOT EXISTS Routes (
