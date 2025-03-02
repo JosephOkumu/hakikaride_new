@@ -34,8 +34,8 @@ func HandleAddStudent(db *sql.DB) http.HandlerFunc {
 
 		result, err := db.Exec(`
 			INSERT INTO Students (ParentID, FirstName, LastName, Grade, AdmNumber, 
-				PickupPoint, DropoffPoint, EmergencyContact, IsActive)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)`,
+				Address, EmergencyContact, IsActive)
+			VALUES (?, ?, ?, ?, ?, ?, ?, true)`,
 			student.ParentID, student.FirstName, student.LastName, student.Grade,
 			student.AdmNumber, student.Address, student.EmergencyContact)
 		
@@ -80,8 +80,8 @@ func HandleBulkUploadStudents(db *sql.DB) http.HandlerFunc {
 
 		stmt, err := tx.Prepare(`
 			INSERT INTO Students (ParentID, FirstName, LastName, Grade, AdmNumber, 
-				PickupPoint, DropoffPoint, EmergencyContact, IsActive)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)`)
+				Address, EmergencyContact, IsActive)
+			VALUES (?, ?, ?, ?, ?, ?, ?, true)`)
 		if err != nil {
 			tx.Rollback()
 			http.Error(w, "Database error", http.StatusInternalServerError)
@@ -107,8 +107,7 @@ func HandleBulkUploadStudents(db *sql.DB) http.HandlerFunc {
 				record[3], // Grade
 				record[4], // AdmNumber
 				record[5], // Address
-				record[6], // EmergencyContact
-			)
+				record[6]) // EmergencyContact
 
 			if err != nil {
 				failed++

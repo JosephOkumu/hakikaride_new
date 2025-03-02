@@ -21,6 +21,31 @@ func InitDB() (*sql.DB, error) {
 	return db, nil
 }
 
+func recreateStudentsTable(db *sql.DB) error {
+	// Drop the Students table if it exists
+	_, err := db.Exec(`DROP TABLE IF EXISTS Students`)
+	if err != nil {
+		return err
+	}
+
+	// Create the Students table with new schema
+	_, err = db.Exec(`
+		CREATE TABLE Students (
+			StudentID INTEGER PRIMARY KEY AUTOINCREMENT,
+			ParentID INTEGER NOT NULL,
+			FirstName VARCHAR(100) NOT NULL,
+			LastName VARCHAR(100) NOT NULL,
+			Grade VARCHAR(50) NOT NULL,
+			AdmNumber VARCHAR(50) NOT NULL UNIQUE,
+			Address TEXT NOT NULL,
+			EmergencyContact VARCHAR(15),
+			IsActive BOOLEAN DEFAULT TRUE,
+			FOREIGN KEY (ParentID) REFERENCES Parents(ParentID)
+		)
+	`)
+	return err
+}
+
 func createTables(db *sql.DB) error {
 	// Create tables using the schema
 	schema := `
@@ -53,8 +78,7 @@ func createTables(db *sql.DB) error {
 		LastName VARCHAR(100) NOT NULL,
 		Grade VARCHAR(50) NOT NULL,
 		AdmNumber VARCHAR(50) NOT NULL UNIQUE,
-		PickupPoint TEXT NOT NULL,
-		DropoffPoint TEXT NOT NULL,
+		Address TEXT NOT NULL,
 		EmergencyContact VARCHAR(15),
 		IsActive BOOLEAN DEFAULT TRUE,
 		FOREIGN KEY (ParentID) REFERENCES Parents(ParentID)
@@ -137,7 +161,7 @@ func createTables(db *sql.DB) error {
 		return err
 	}
 
-	return nil
+	return recreateStudentsTable(db)
 }
 
 // CreateDefaultAdmin creates default admin users if no admin exists
