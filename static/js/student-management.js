@@ -123,12 +123,21 @@ async function loadStudents() {
             data.students.forEach(student => {
                 const row = document.createElement('tr');
                 const cellStyle = 'padding: 1rem; border-bottom: 1px solid var(--border-color);';
+                const actionBtnStyle = 'padding: 0.5rem 1rem; border-radius: 4px; border: none; cursor: pointer; margin-right: 0.5rem; font-size: 0.9rem;';
                 row.innerHTML = `
                     <td style="${cellStyle}">${student.admNumber}</td>
                     <td style="${cellStyle}; min-width: 200px;">${student.firstName} ${student.lastName}</td>
                     <td style="${cellStyle}">${student.grade}</td>
                     <td style="${cellStyle}">${student.address}</td>
                     <td style="${cellStyle}">${student.emergencyContact}</td>
+                    <td style="${cellStyle}">
+                        <button onclick='editStudent(${JSON.stringify(student).replace(/'/g, "&apos;")})' style="${actionBtnStyle}; background: var(--primary-color); color: white;">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button onclick="deleteStudent(${student.studentId})" style="${actionBtnStyle}; background: #FFD700; color: var(--text-primary);">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
                 `;
                 tableBody.appendChild(row);
             });
@@ -150,7 +159,8 @@ function editStudent(student) {
     document.getElementById('emergencyContact').value = student.emergencyContact;
     document.getElementById('parentId').value = student.parentId;
     
-    document.getElementById('studentModal').style.display = 'block';
+    const modal = document.getElementById('studentModal');
+    modal.style.display = 'block';
 }
 
 // Delete student
