@@ -70,6 +70,13 @@ func main() {
 	adminRouter.HandleFunc("/routes", api.HandleListRoutes(db)).Methods("GET")
 	adminRouter.HandleFunc("/buses", api.HandleListBuses(db)).Methods("GET")
 
+	// Student management routes
+	adminRouter.HandleFunc("/students/add", api.HandleAddStudent(db)).Methods("POST")
+	adminRouter.HandleFunc("/students/bulk-upload", api.HandleBulkUploadStudents(db)).Methods("POST")
+	adminRouter.HandleFunc("/students/update", api.HandleUpdateStudent(db)).Methods("PUT")
+	adminRouter.HandleFunc("/students/delete", api.HandleDeleteStudent(db)).Methods("DELETE")
+	adminRouter.HandleFunc("/students/list", api.HandleListStudents(db)).Methods("GET")
+
 	// Trip routes
 	apiRouter.HandleFunc("/trips/start", api.HandleStartTrip(db)).Methods("POST")
 	apiRouter.HandleFunc("/trips/end", api.HandleEndTrip(db)).Methods("GET")
@@ -94,6 +101,7 @@ func main() {
 	r.HandleFunc("/driver/dashboard", serveDriverDashboard)
 	r.HandleFunc("/parent/dashboard", serveParentDashboard)
 	r.HandleFunc("/admin/dashboard", serveAdminDashboard)
+	r.HandleFunc("/admin/students", serveStudentManagement)
 
 	// Start server
 	port := os.Getenv("PORT")
@@ -178,4 +186,13 @@ func serveAdminDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	templ.Execute(w, data)
+}
+
+func serveStudentManagement(w http.ResponseWriter, r *http.Request) {
+	templ, err := template.ParseFiles("templates/student-management.html")
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+	templ.Execute(w, nil)
 }

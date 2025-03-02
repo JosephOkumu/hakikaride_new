@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management - HakikaRide</title>
+    <link rel="stylesheet" href="/static/css/admin-dashboard-new.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-container">
+                    <div class="school-initial">H</div>
+                    <div class="school-info">
+                        <h2>HakikaRide</h2>
+                        <span class="admin-email">admin@hakikaride.com</span>
+                    </div>
+                </div>
+            </div>
+            
+            <ul class="nav-links">
+                <li onclick="window.location.href='/admin/dashboard'">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </li>
+                <li onclick="window.location.href='/admin/fleet'">
+                    <i class="fas fa-bus"></i>
+                    <span>Fleet Management</span>
+                </li>
+                <li class="active" onclick="window.location.href='/admin/students'">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Students</span>
+                </li>
+                <li onclick="window.location.href='/admin/routes'">
+                    <i class="fas fa-route"></i>
+                    <span>Route Management</span>
+                </li>
+                <li onclick="window.location.href='/admin/drivers'">
+                    <i class="fas fa-id-card"></i>
+                    <span>Driver Management</span>
+                </li>
+                <li onclick="window.location.href='/logout'">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sign Out</span>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <h1 class="dashboard-title">Student Management</h1>
+            
+            <div class="quick-stats-card">
+                <div class="actions-panel" style="margin-bottom: 2rem; background: var(--background-color); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <button id="addStudentBtn" style="background: var(--primary-color); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; transition: all 0.3s ease;">
+                                <i class="fas fa-plus"></i> Add Student
+                            </button>
+                            <button id="bulkUploadBtn" style="background: #FFD700; color: var(--text-primary); padding: 0.8rem 1.5rem; border: none; border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                <i class="fas fa-upload"></i> Bulk Upload
+                            </button>
+                        </div>
+                        <a href="/static/templates/student_upload_template.csv" style="background: white; color: var(--primary-color); padding: 0.8rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; text-decoration: none; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                            <i class="fas fa-download"></i> Download Template
+                        </a>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; background: white; border-radius: 8px; overflow: hidden;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: var(--background-color);">
+                                <th style="padding: 1rem; text-align: left; color: var(--text-primary); font-weight: 600;">Adm No</th>
+                                <th style="padding: 1rem; text-align: left; color: var(--text-primary); font-weight: 600; min-width: 200px;">Name</th>
+                                <th style="padding: 1rem; text-align: left; color: var(--text-primary); font-weight: 600;">Grade</th>
+                                <th style="padding: 1rem; text-align: left; color: var(--text-primary); font-weight: 600;">Address</th>
+                                <th style="padding: 1rem; text-align: left; color: var(--text-primary); font-weight: 600;">Emergency Contact</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <!-- Students will be loaded here dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+    </div>
+
+    <!-- Add/Edit Student Modal -->
+    <div id="studentModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: relative; background-color: white; margin: 50px auto; padding: 2rem; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: var(--shadow);">
+            <span style="position: absolute; right: 1.5rem; top: 1rem; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);" class="close">&times;</span>
+            <h2 id="modalTitle" style="color: var(--text-primary); margin-bottom: 1.5rem;">Add New Student</h2>
+            <form id="studentForm">
+                <input type="hidden" id="studentId">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="firstName">First Name</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="text" id="firstName" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="lastName">Last Name</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="text" id="lastName" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="admNumber">Admission Number</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="text" id="admNumber" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="grade">Grade</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="text" id="grade" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="address">Address</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="text" id="address" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="emergencyContact">Emergency Contact</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="tel" id="emergencyContact" required>
+                </div>
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="parentId">Parent ID</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="number" id="parentId" required>
+                </div>
+                <button type="submit" style="background: #FFD700; color: var(--text-primary); padding: 0.8rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-family: inherit; font-weight: 500; transition: all 0.3s ease; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">Save Student</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="position: relative; background-color: white; margin: 50px auto; padding: 2rem; width: 90%; max-width: 600px; border-radius: 12px; box-shadow: var(--shadow);">
+            <span style="position: absolute; right: 1.5rem; top: 1rem; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary);" class="close">&times;</span>
+            <h2 style="color: var(--text-primary); margin-bottom: 1.5rem;">Bulk Upload Students</h2>
+            <form id="bulkUploadForm">
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-primary);" for="csvFile">Upload CSV File</label>
+                    <input style="width: 100%; padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; font-family: inherit;" type="file" id="csvFile" accept=".csv" required>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin: 1rem 0;">
+                    Please use the template file and ensure all required fields are filled correctly.
+                    The CSV should have the following columns: ParentID, FirstName, LastName, Grade, 
+                    AdmNumber, PickupPoint, DropoffPoint, EmergencyContact
+                </p>
+                <button type="submit" style="background: var(--primary-color); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-family: inherit;">Upload Students</button>
+            </form>
+        </div>
+    </div>
+    <!-- Font Awesome -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    
+    <!-- Application Scripts -->
+    <script src="/static/js/student-management.js"></script>
+</body>
+</html>
