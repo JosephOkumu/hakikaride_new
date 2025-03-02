@@ -56,8 +56,9 @@
             
             <div class="quick-stats-card">
                 <div class="actions-panel" style="margin-bottom: 2rem; background: var(--background-color); padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; gap: 1rem; align-items: center;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                            <input type="text" id="searchInput" placeholder="Search students..." style="padding: 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; min-width: 250px; font-family: inherit;">
                             <button id="addStudentBtn" style="background: var(--primary-color); color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 8px; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 500; transition: all 0.3s ease;">
                                 <i class="fas fa-plus"></i> Add Student
                             </button>
