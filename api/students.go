@@ -138,17 +138,51 @@ func HandleUpdateStudent(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		_, err := db.Exec(`
+		// Start a transaction
+		tx, err := db.Begin()
+		if err != nil {
+			log.Printf("Error starting transaction: %v", err)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		// Check if student exists
+		var exists bool
+		err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM Students WHERE StudentID = ?)", student.StudentID).Scan(&exists)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Error checking student existence: %v", err)
+			http.Error(w, "Error updating student", http.StatusInternalServerError)
+			return
+		}
+
+		if !exists {
+			tx.Rollback()
+			http.Error(w, "Student not found", http.StatusNotFound)
+			return
+		}
+
+		// Update student record
+		_, err = tx.Exec(`
 			UPDATE Students 
 			SET FirstName = ?, LastName = ?, Grade = ?, AdmNumber = ?,
-				Address = ?, EmergencyContact = ?
+				Address = ?, EmergencyContact = ?, ParentID = ?
 			WHERE StudentID = ?`,
 			student.FirstName, student.LastName, student.Grade, student.AdmNumber,
-			student.Address, student.EmergencyContact,
+			student.Address, student.EmergencyContact, student.ParentID,
 			student.StudentID)
 
 		if err != nil {
+			tx.Rollback()
 			log.Printf("Error updating student: %v", err)
+			http.Error(w, "Error updating student", http.StatusInternalServerError)
+			return
+		}
+
+		// Commit the transaction
+		if err := tx.Commit(); err != nil {
+			tx.Rollback()
+			log.Printf("Error committing transaction: %v", err)
 			http.Error(w, "Error updating student", http.StatusInternalServerError)
 			return
 		}
@@ -160,7 +194,7 @@ func HandleUpdateStudent(db *sql.DB) http.HandlerFunc {
 	}
 }
 
-// HandleDeleteStudent handles deleting a student (soft delete)
+// HandleDeleteStudent handles deleting a student (hard delete)
 func HandleDeleteStudent(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		studentID := r.URL.Query().Get("id")
@@ -169,9 +203,36 @@ func HandleDeleteStudent(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		_, err := db.Exec("UPDATE Students SET IsActive = false WHERE StudentID = ?", studentID)
+		// Start a transaction
+		tx, err := db.Begin()
 		if err != nil {
+			log.Printf("Error starting transaction: %v", err)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		// Delete any attendance records for this student
+		_, err = tx.Exec("DELETE FROM Attendance WHERE StudentID = ?", studentID)
+		if err != nil {
+			tx.Rollback()
+			log.Printf("Error deleting attendance records: %v", err)
+			http.Error(w, "Error deleting student", http.StatusInternalServerError)
+			return
+		}
+
+		// Delete the student record
+		_, err = tx.Exec("DELETE FROM Students WHERE StudentID = ?", studentID)
+		if err != nil {
+			tx.Rollback()
 			log.Printf("Error deleting student: %v", err)
+			http.Error(w, "Error deleting student", http.StatusInternalServerError)
+			return
+		}
+
+		// Commit the transaction
+		if err := tx.Commit(); err != nil {
+			tx.Rollback()
+			log.Printf("Error committing transaction: %v", err)
 			http.Error(w, "Error deleting student", http.StatusInternalServerError)
 			return
 		}
