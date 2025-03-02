@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is authenticated
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/';
+        return;
+    }
+
     // DOM Elements
     const studentModal = document.getElementById('studentModal');
     const bulkUploadModal = document.getElementById('bulkUploadModal');
@@ -49,7 +56,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch(`/api/admin/students/${studentId ? 'update' : 'add'}`, {
                 method: studentId ? 'PUT' : 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(studentData)
             });
@@ -77,6 +85,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch('/api/admin/students/bulk-upload', {
                 method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
                 body: formData
             });
 
@@ -98,7 +109,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Load students from the server
 async function loadStudents() {
     try {
-        const response = await fetch('/api/admin/students/list');
+        const response = await fetch('/api/admin/students/list', {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
         const data = await response.json();
         
         if (data.success) {
@@ -143,7 +158,10 @@ async function deleteStudent(studentId) {
     if (confirm('Are you sure you want to delete this student?')) {
         try {
             const response = await fetch(`/api/admin/students/delete?id=${studentId}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                }
             });
             
             const result = await response.json();
