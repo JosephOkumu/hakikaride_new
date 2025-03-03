@@ -1,15 +1,148 @@
-// Global variables for driver management
+// Global variables
 let allDrivers = [];
 let isEditMode = false;
 
-// Load drivers when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    loadDrivers();
-    loadBuses();
+// Initialize when the page loads
+document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    loadDrivers();
 });
 
-function loadBuses() {
+function initializeEventListeners() {
+    const driverForm = document.getElementById('driverForm');
+
+    if (driverForm) {
+        driverForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                firstName: document.getElementById('firstName').value,
+                lastName: document.getElementById('lastName').value,
+                phoneNumber: document.getElementById('phoneNumber').value,
+                busNumberPlate: document.getElementById('busId').value
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/admin/drivers/add', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('driverModal').style.display = 'none';
+                    driverForm.reset();
+                    loadDrivers();
+                } else {
+                    alert('Error: ' + (data.message || 'Failed to add driver'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error adding driver. Please try again.');
+            }
+        });
+    }
+}
+
+function loadDrivers() {
+    const token = localStorage.getItem('token');
+    fetch('/api/admin/drivers/list', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            allDrivers = data.drivers;
+            renderDrivers(allDrivers);
+        }
+    })
+    .catch(error => console.error('Error loading drivers:', error));
+}
+
+function renderDrivers(drivers) {
+    const tbody = document.getElementById('driversTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    drivers.forEach(driver => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${driver.firstName}</td>
+            <td>${driver.lastName}</td>
+            <td>${driver.phoneNumber}</td>
+            <td>${driver.busNumberPlate || 'Not Assigned'}</td>
+            <td>
+                <button class="btn-edit" data-id="${driver.id}">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn-delete" data-id="${driver.id}">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    // Add event listeners for edit and delete buttons
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const driverId = e.currentTarget.dataset.id;
+            const driver = allDrivers.find(d => d.id === driverId);
+            if (driver) editDriver(driver);
+        });
+    });
+
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const driverId = e.currentTarget.dataset.id;
+            deleteDriver(driverId);
+        });
+    });
+}
+
+function editDriver(driver) {
+    const modal = document.getElementById('driverModal');
+    document.getElementById('firstName').value = driver.firstName;
+    document.getElementById('lastName').value = driver.lastName;
+    document.getElementById('phoneNumber').value = driver.phoneNumber;
+    document.getElementById('busId').value = driver.busNumberPlate || '';
+    
+    document.getElementById('modalTitle').textContent = 'Edit Driver';
+    document.getElementById('submitDriverBtn').textContent = 'Update Driver';
+    modal.style.display = 'block';
+    isEditMode = true;
+}
+
+function deleteDriver(driverId) {
+    if (confirm('Are you sure you want to delete this driver?')) {
+        const token = localStorage.getItem('token');
+        fetch(`/api/admin/drivers/delete/${driverId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadDrivers();
+            } else {
+                alert('Error: ' + (data.message || 'Failed to delete driver'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting driver. Please try again.');
+        });
+    }
+}
     const token = localStorage.getItem('token');
     fetch('/api/admin/buses', {
         headers: {
@@ -29,6 +162,7 @@ function loadBuses() {
         }
     })
     .catch(error => console.error('Error loading buses:', error));
+
 
 function loadDrivers() {
     const token = localStorage.getItem('token');
