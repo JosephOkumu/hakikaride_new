@@ -55,9 +55,9 @@ func HandleAddDriver(db *sql.DB) http.HandlerFunc {
 
 		// Insert into Drivers table
 		_, err = tx.Exec(`
-			INSERT INTO Drivers (UserID, FirstName, LastName, PhoneNumber, IsActive)
-			VALUES (?, ?, ?, ?, true)`,
-			userID, driver.FirstName, driver.LastName, driver.PhoneNumber)
+			INSERT INTO Drivers (UserID, FirstName, LastName, PhoneNumber, BusID, IsActive)
+			VALUES (?, ?, ?, ?, ?, true)`,
+			userID, driver.FirstName, driver.LastName, driver.PhoneNumber, driver.BusID)
 
 		if err != nil {
 			tx.Rollback()
@@ -99,9 +99,9 @@ func HandleUpdateDriver(db *sql.DB) http.HandlerFunc {
 		// Update driver information
 		_, err = tx.Exec(`
 			UPDATE Drivers 
-			SET FirstName = ?, LastName = ?, PhoneNumber = ?
+			SET FirstName = ?, LastName = ?, PhoneNumber = ?, BusID = ?
 			WHERE DriverID = ?`,
-			driver.FirstName, driver.LastName, driver.PhoneNumber, driver.DriverID)
+			driver.FirstName, driver.LastName, driver.PhoneNumber, driver.BusID, driver.DriverID)
 
 		if err != nil {
 			tx.Rollback()

@@ -5,11 +5,38 @@ let isEditMode = false;
 // Load drivers when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     loadDrivers();
+    loadBuses();
     initializeEventListeners();
 });
 
+function loadBuses() {
+    const token = localStorage.getItem('token');
+    fetch('/api/admin/buses', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const busSelect = document.getElementById('busId');
+            data.buses.forEach(bus => {
+                const option = document.createElement('option');
+                option.value = bus.busId;
+                option.textContent = bus.numberPlate;
+                busSelect.appendChild(option);
+            });
+        }
+    })
+    .catch(error => console.error('Error loading buses:', error));
+
 function loadDrivers() {
-    fetch('/api/admin/drivers/list')
+    const token = localStorage.getItem('token');
+    fetch('/api/admin/drivers/list', {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -105,17 +132,20 @@ function initializeEventListeners() {
                 userId: document.getElementById('userId').value,
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
-                phoneNumber: document.getElementById('phoneNumber').value
+                phoneNumber: document.getElementById('phoneNumber').value,
+                busId: document.getElementById('busId').value || null
             };
 
             const url = isEditMode ? '/api/admin/drivers/update' : '/api/admin/drivers/add';
             const method = isEditMode ? 'PUT' : 'POST';
 
             try {
+                const token = localStorage.getItem('token');
                 const response = await fetch(url, {
                     method: method,
                     headers: {
                         'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify(formData)
                 });
@@ -149,14 +179,19 @@ function editDriver(driver) {
     document.getElementById('firstName').value = driver.firstName;
     document.getElementById('lastName').value = driver.lastName;
     document.getElementById('phoneNumber').value = driver.phoneNumber;
+    document.getElementById('busId').value = driver.busId || '';
     
     document.getElementById('driverModal').style.display = 'block';
 }
 
 function deleteDriver(driverId) {
     if (confirm('Are you sure you want to delete this driver?')) {
+        const token = localStorage.getItem('token');
         fetch(`/api/admin/drivers/delete?id=${driverId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
         })
         .then(response => response.json())
         .then(data => {

@@ -40,7 +40,7 @@
                     <i class="fas fa-route"></i>
                     <span>Route Management</span>
                 </li>
-                <li data-panel="drivers">
+                <li onclick="window.location.href='/admin/drivers'">
                     <i class="fas fa-id-card"></i>
                     <span>Driver Management</span>
                 </li>
@@ -53,10 +53,12 @@
 
         <!-- Main Content Area -->
         <div class="main-content">
-            <h1 class="dashboard-title">School Dashboard</h1>
-            <div class="quick-stats-card">
-                <h2 class="quick-stats-title">Quick Stats</h2>
-                <div class="stats-container">
+            <!-- Dashboard Panel -->
+            <div class="content-panel" id="dashboard-panel">
+                <h1 class="dashboard-title">School Dashboard</h1>
+                <div class="quick-stats-card">
+                    <h2 class="quick-stats-title">Quick Stats</h2>
+                    <div class="stats-container">
                     <div class="stat-item">
                         <div class="stat-icon">
                             <i class="fas fa-bus"></i>
@@ -90,7 +92,10 @@
                             <p class="stat-number">{{.Stats.TotalStudents}}</p>
                         </div>
                     </div>
+                    </div>
                 </div>
+            </div>
+
             </div>
         </div>
     </div>

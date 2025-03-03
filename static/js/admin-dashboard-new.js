@@ -59,34 +59,40 @@ function showBusLocation(bus) {
 document.querySelectorAll('.nav-links li').forEach(item => {
     item.addEventListener('click', () => {
         const panel = item.getAttribute('data-panel');
+        
+        // If it's a link to another page, let the onclick handler handle it
+        if (item.hasAttribute('onclick')) {
+            return;
+        }
+
         document.querySelectorAll('.nav-links li').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
 
+        // Hide all panels
+        document.querySelectorAll('.content-panel').forEach(p => p.style.display = 'none');
+
         // Handle panel switching
         switch(panel) {
-            case 'fleet':
-                // Show fleet management view
-                break;
-            case 'students':
-                // Show students view
-                break;
-            case 'drivers':
-                // Show drivers view
+            case 'dashboard':
+                document.getElementById('dashboard-panel').style.display = 'block';
                 break;
             case 'sign-out':
-                // Handle sign out
-                window.location.href = '/logout';
+                handleSignOut();
                 break;
+            default:
+                document.getElementById('dashboard-panel').style.display = 'block';
         }
     });
 });
 
-// Search functionality
-const searchInput = document.querySelector('.search-input');
-searchInput.addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    // Implement search logic here
-});
+// Search functionality for other panels can be added here when needed
+
+function handleSignOut() {
+    // Clear any auth tokens
+    localStorage.removeItem('authToken');
+    // Redirect to login page
+    window.location.href = '/';
+}
 
 // Example data for testing
 const sampleBuses = [
