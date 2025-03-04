@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
+	
+	"hakikaride/auth"
 )
 
 type Driver struct {
@@ -21,9 +24,35 @@ type Driver struct {
 // HandleAddDriver handles adding a new driver
 func HandleAddDriver(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		var driver Driver
 		if err := json.NewDecoder(r.Body).Decode(&driver); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Invalid request body",
+			})
+			return
+		}
+
+		// Generate a secure random password for the new driver
+		password, err := auth.GenerateSecurePassword(10) // 10-character password
+		if err != nil {
+			log.Printf("Error generating password: %v", err)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error creating driver",
+			})
+			return
+		}
+
+		// Hash the password for storage
+		hashedPassword, err := auth.HashPassword(password)
+		if err != nil {
+			log.Printf("Error hashing password: %v", err)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error creating driver",
+			})
 			return
 		}
 
@@ -31,25 +60,57 @@ func HandleAddDriver(db *sql.DB) http.HandlerFunc {
 		tx, err := db.Begin()
 		if err != nil {
 			log.Printf("Error starting transaction: %v", err)
-			http.Error(w, "Database error", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Database error",
+			})
 			return
+		}
+
+		// If busNumberPlate is provided, look up the BusID
+		if driver.BusNumberPlate != "" {
+			var busID int
+			err := tx.QueryRow("SELECT BusID FROM Buses WHERE NumberPlate = ?", driver.BusNumberPlate).Scan(&busID)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					// Bus not found
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"success": false,
+						"message": "Bus with number plate " + driver.BusNumberPlate + " not found",
+					})
+				} else {
+					// Database error
+					log.Printf("Error looking up bus: %v", err)
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"success": false,
+						"message": "Database error when looking up bus",
+					})
+				}
+				tx.Rollback()
+				return
+			}
+			id := busID
+			driver.BusID = &id
 		}
 
 		// Insert into Users table first
 		var userID int64
 		err = tx.QueryRow(`
-			INSERT INTO Users (Username, Email, PasswordHash, UserType)
-			VALUES (?, ?, ?, 'driver')
+			INSERT INTO Users (Username, Email, PasswordHash, UserType, PasswordResetRequired)
+			VALUES (?, ?, ?, 'driver', true)
 			RETURNING UserID`,
 			driver.PhoneNumber, // Using phone number as username
 			driver.PhoneNumber+"@hakikaride.com", // Temporary email
-			"defaultpass", // This should be changed on first login
+			hashedPassword, // Securely generated and hashed password
 		).Scan(&userID)
 
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Error creating user: %v", err)
-			http.Error(w, "Error creating driver", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error creating driver",
+			})
 			return
 		}
 
@@ -62,20 +123,30 @@ func HandleAddDriver(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Error creating driver: %v", err)
-			http.Error(w, "Error creating driver", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error creating driver",
+			})
 			return
 		}
 
 		if err := tx.Commit(); err != nil {
 			tx.Rollback()
 			log.Printf("Error committing transaction: %v", err)
-			http.Error(w, "Error creating driver", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error creating driver",
+			})
 			return
 		}
 
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"success": true,
 			"message": "Driver added successfully",
+			"driverDetails": map[string]interface{}{
+				"phoneNumber": driver.PhoneNumber,
+				"initialPassword": password,
+			},
 		})
 	}
 }
@@ -83,17 +154,50 @@ func HandleAddDriver(db *sql.DB) http.HandlerFunc {
 // HandleUpdateDriver handles updating driver information
 func HandleUpdateDriver(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		var driver Driver
 		if err := json.NewDecoder(r.Body).Decode(&driver); err != nil {
-			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Invalid request body",
+			})
 			return
 		}
 
 		tx, err := db.Begin()
 		if err != nil {
 			log.Printf("Error starting transaction: %v", err)
-			http.Error(w, "Database error", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Database error",
+			})
 			return
+		}
+
+		// If busNumberPlate is provided, look up the BusID
+		if driver.BusNumberPlate != "" {
+			var busID int
+			err := tx.QueryRow("SELECT BusID FROM Buses WHERE NumberPlate = ?", driver.BusNumberPlate).Scan(&busID)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					// Bus not found
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"success": false,
+						"message": "Bus with number plate " + driver.BusNumberPlate + " not found",
+					})
+				} else {
+					// Database error
+					log.Printf("Error looking up bus: %v", err)
+					json.NewEncoder(w).Encode(map[string]interface{}{
+						"success": false,
+						"message": "Database error when looking up bus",
+					})
+				}
+				tx.Rollback()
+				return
+			}
+			id := busID
+			driver.BusID = &id
 		}
 
 		// Update driver information
@@ -106,7 +210,10 @@ func HandleUpdateDriver(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Error updating driver: %v", err)
-			http.Error(w, "Error updating driver", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error updating driver",
+			})
 			return
 		}
 
@@ -120,14 +227,20 @@ func HandleUpdateDriver(db *sql.DB) http.HandlerFunc {
 		if err != nil {
 			tx.Rollback()
 			log.Printf("Error updating user: %v", err)
-			http.Error(w, "Error updating driver", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error updating driver",
+			})
 			return
 		}
 
 		if err := tx.Commit(); err != nil {
 			tx.Rollback()
 			log.Printf("Error committing transaction: %v", err)
-			http.Error(w, "Error updating driver", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error updating driver",
+			})
 			return
 		}
 
@@ -141,6 +254,7 @@ func HandleUpdateDriver(db *sql.DB) http.HandlerFunc {
 // HandleListDriversDetailed handles retrieving all active drivers with detailed information
 func HandleListDriversDetailed(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		rows, err := db.Query(`
 			SELECT d.DriverID, d.UserID, d.FirstName, d.LastName, d.PhoneNumber, d.IsActive, d.BusID, b.NumberPlate
 			FROM Drivers d
@@ -149,7 +263,10 @@ func HandleListDriversDetailed(db *sql.DB) http.HandlerFunc {
 			ORDER BY d.FirstName, d.LastName`)
 		if err != nil {
 			log.Printf("Error querying drivers: %v", err)
-			http.Error(w, "Error retrieving drivers", http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error retrieving drivers",
+			})
 			return
 		}
 		defer rows.Close()
@@ -163,6 +280,16 @@ func HandleListDriversDetailed(db *sql.DB) http.HandlerFunc {
 				log.Printf("Error scanning driver row: %v", err)
 				continue
 			}
+			
+			if busID.Valid {
+				id := int(busID.Int64)
+				d.BusID = &id
+			}
+			
+			if numberPlate.Valid {
+				d.BusNumberPlate = numberPlate.String
+			}
+			
 			drivers = append(drivers, d)
 		}
 
@@ -176,7 +303,11 @@ func HandleListDriversDetailed(db *sql.DB) http.HandlerFunc {
 // HandleDeleteDriver handles deleting a driver
 func HandleDeleteDriver(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		driverID := r.URL.Query().Get("id")
+		w.Header().Set("Content-Type", "application/json")
+		// Extract driver ID from URL path
+		parts := strings.Split(r.URL.Path, "/")
+		driverID := parts[len(parts)-1]
+		
 		if driverID == "" {
 			http.Error(w, "Driver ID is required", http.StatusBadRequest)
 			return

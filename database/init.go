@@ -57,7 +57,8 @@ func createTables(db *sql.DB) error {
 		UserType VARCHAR(10) NOT NULL CHECK (UserType IN ('admin', 'parent', 'driver')),
 		CreatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		LastLogin DATETIME,
-		IsActive BOOLEAN DEFAULT 1
+		IsActive BOOLEAN DEFAULT 1,
+		PasswordResetRequired BOOLEAN DEFAULT 0
 	);
 
 	CREATE TABLE IF NOT EXISTS Parents (
@@ -84,18 +85,6 @@ func createTables(db *sql.DB) error {
 		FOREIGN KEY (ParentID) REFERENCES Parents(ParentID)
 	);
 
-	CREATE TABLE IF NOT EXISTS Drivers (
-		DriverID INTEGER PRIMARY KEY AUTOINCREMENT,
-		UserID INTEGER NOT NULL,
-		FirstName VARCHAR(100) NOT NULL,
-		LastName VARCHAR(100) NOT NULL,
-		PhoneNumber VARCHAR(15) NOT NULL,
-		BusID INTEGER UNIQUE,
-		IsActive BOOLEAN DEFAULT TRUE,
-		FOREIGN KEY (UserID) REFERENCES Users(UserID),
-		FOREIGN KEY (BusID) REFERENCES Buses(BusID)
-	);
-
 	CREATE TABLE IF NOT EXISTS Routes (
 		RouteID INTEGER PRIMARY KEY AUTOINCREMENT,
 		RouteName VARCHAR(255) NOT NULL,
@@ -109,6 +98,18 @@ func createTables(db *sql.DB) error {
 		RouteID INTEGER NOT NULL,
 		IsActive BOOLEAN DEFAULT TRUE,
 		FOREIGN KEY (RouteID) REFERENCES Routes(RouteID)
+	);
+
+	CREATE TABLE IF NOT EXISTS Drivers (
+		DriverID INTEGER PRIMARY KEY AUTOINCREMENT,
+		UserID INTEGER NOT NULL,
+		FirstName VARCHAR(100) NOT NULL,
+		LastName VARCHAR(100) NOT NULL,
+		PhoneNumber VARCHAR(15) NOT NULL,
+		BusID INTEGER,
+		IsActive BOOLEAN DEFAULT TRUE,
+		FOREIGN KEY (UserID) REFERENCES Users(UserID),
+		FOREIGN KEY (BusID) REFERENCES Buses(BusID)
 	);
 
 	CREATE TABLE IF NOT EXISTS Trips (
@@ -163,7 +164,7 @@ func createTables(db *sql.DB) error {
 		return err
 	}
 
-	return recreateStudentsTable(db)
+	return nil
 }
 
 // CreateDefaultAdmin creates default admin users if no admin exists
@@ -209,8 +210,8 @@ func CreateDefaultAdmin(db *sql.DB) error {
 		}
 
 		_, err = db.Exec(`
-			INSERT INTO Users (Username, Email, PasswordHash, UserType, CreatedAt, IsActive)
-			VALUES (?, ?, ?, 'admin', CURRENT_TIMESTAMP, true)`,
+			INSERT INTO Users (Username, Email, PasswordHash, UserType, CreatedAt, IsActive, PasswordResetRequired)
+			VALUES (?, ?, ?, 'admin', CURRENT_TIMESTAMP, true, true)`,
 			admin.username, admin.email, hashedPassword)
 
 		if err != nil {

@@ -24,10 +24,16 @@ class AuthManager {
         submitButton.classList.add('btn-loading');
 
         const formData = new FormData(e.target);
+        const userType = formData.get('userType');
+        
+        // For drivers, we use phone number as username/login
+        const isDriver = userType === 'driver';
+        const emailOrPhone = formData.get('email');
+        
         const credentials = {
-            email: formData.get('email'),
+            email: emailOrPhone, // Email field contains email or phone
             password: formData.get('password'),
-            userType: formData.get('userType')
+            userType: userType
         };
 
         try {
@@ -45,6 +51,13 @@ class AuthManager {
                 // Store token
                 localStorage.setItem('token', data.token);
                 localStorage.setItem('userType', data.userType);
+                
+                // Check if password reset is required
+                if (data.passwordResetRequired) {
+                    localStorage.setItem('passwordResetRequired', 'true');
+                    window.location.href = '/change-password';
+                    return;
+                }
 
                 // Redirect based on user type
                 switch (data.userType) {

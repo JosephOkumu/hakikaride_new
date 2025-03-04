@@ -4,6 +4,13 @@ let isEditMode = false;
 
 // Initialize when the page loads
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is logged in
+    const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/'; // Redirect to login page
+        return;
+    }
+
     initializeEventListeners();
     loadDrivers();
 });
@@ -38,6 +45,12 @@ function initializeEventListeners() {
         driverForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/'; // Redirect to login if no token
+                return;
+            }
+            
             const formData = {
                 firstName: document.getElementById('firstName').value,
                 lastName: document.getElementById('lastName').value,
@@ -46,12 +59,16 @@ function initializeEventListeners() {
             };
 
             try {
-                const token = localStorage.getItem('token');
                 const url = isEditMode ? 
-                    `/api/admin/drivers/update/${document.getElementById('driverId').value}` : 
+                    `/api/admin/drivers/update` : 
                     '/api/admin/drivers/add';
                 
                 const method = isEditMode ? 'PUT' : 'POST';
+                
+                if (isEditMode) {
+                    // For edit mode, include the driver ID in the form data
+                    formData.driverId = document.getElementById('driverId').value;
+                }
                 
                 const response = await fetch(url, {
                     method: method,
@@ -62,13 +79,26 @@ function initializeEventListeners() {
                     body: JSON.stringify(formData)
                 });
 
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                
                 const data = await response.json();
                 if (data.success) {
                     document.getElementById('driverModal').style.display = 'none';
                     driverForm.reset();
                     loadDrivers();
+                    // If it's a new driver, show the password to the admin
+                    if (!isEditMode && data.driverDetails && data.driverDetails.initialPassword) {
+                        alert(`Driver added successfully!\n\nDriver Phone: ${data.driverDetails.phoneNumber}\nInitial Password: ${data.driverDetails.initialPassword}\n\nPlease share these credentials with the driver.`);
+                    }
                 } else {
                     alert('Error: ' + (data.message || 'Failed to process driver data'));
+                    // If unauthorized, redirect to login
+                    if (data.message && (data.message.includes('token') || data.message.includes('authorization'))) {
+                        localStorage.removeItem('token');
+                        window.location.href = '/';
+                    }
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -88,19 +118,38 @@ function initializeEventListeners() {
 
 function loadDrivers() {
     const token = localStorage.getItem('token');
+    if (!token) {
+        window.location.href = '/'; // Redirect to login if no token
+        return;
+    }
+
     fetch('/api/admin/drivers/list', {
         headers: {
             'Authorization': `Bearer ${token}`
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.statusText);
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            allDrivers = data.drivers;
+            allDrivers = data.drivers || [];
             renderDrivers(allDrivers);
+        } else {
+            console.error('Error loading drivers:', data.message);
+            // If unauthorized, redirect to login
+            if (data.message && (data.message.includes('token') || data.message.includes('authorization'))) {
+                localStorage.removeItem('token');
+                window.location.href = '/';
+            }
         }
     })
-    .catch(error => console.error('Error loading drivers:', error));
+    .catch(error => {
+        console.error('Error loading drivers:', error);
+    });
 }
 
 function renderDrivers(drivers) {
@@ -163,23 +212,38 @@ function editDriver(driver) {
 function deleteDriver(driverId) {
     if (confirm('Are you sure you want to delete this driver?')) {
         const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/'; // Redirect to login if no token
+            return;
+        }
+        
         fetch(`/api/admin/drivers/delete/${driverId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok: ' + response.statusText);
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 loadDrivers();
             } else {
-                alert('Error: ' + data.message);
+                alert('Error: ' + (data.message || 'Failed to delete driver'));
+                // If unauthorized, redirect to login
+                if (data.message && (data.message.includes('token') || data.message.includes('authorization'))) {
+                    localStorage.removeItem('token');
+                    window.location.href = '/';
+                }
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Error deleting driver');
+            alert('Error deleting driver. Please try again.');
         });
     }
 }

@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"crypto/rand"
+	"encoding/base64"
 	"golang.org/x/crypto/bcrypt"
 	"github.com/dgrijalva/jwt-go"
 )
@@ -66,9 +68,39 @@ func GenerateToken(userID int, userType string) (string, error) {
 	return tokenString, nil
 }
 
+func GenerateSecurePassword(length int) (string, error) {
+	if length < 8 {
+		length = 8 // Minimum password length for security
+	}
+
+	// Calculate how many bytes we need for the requested length
+	// Each byte will be converted to ~1.3 characters in base64
+	byteLength := (length * 3) / 4
+	if byteLength < 1 {
+		byteLength = 1
+	}
+
+	// Generate random bytes
+	randomBytes := make([]byte, byteLength)
+	_, err := rand.Read(randomBytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Convert to base64 string
+	password := base64.StdEncoding.EncodeToString(randomBytes)
+
+	// Trim to desired length
+	if len(password) > length {
+		password = password[:length]
+	}
+
+	return password, nil
+}
+
 func validateCredentials(creds Credentials) (string, bool) {
 	if creds.Email == "" {
-		return "Email is required", false
+		return "Email or phone number is required", false
 	}
 	if creds.Password == "" {
 		return "Password is required", false
@@ -104,16 +136,30 @@ func HandleLogin(db *sql.DB) http.HandlerFunc {
 
 		// Get user from database
 		var user struct {
-			UserID       int
-			PasswordHash string
-			UserType     string
+			UserID              int
+			PasswordHash        string
+			UserType            string
+			PasswordResetRequired bool
 		}
 
-		err := db.QueryRow(`
-			SELECT UserID, PasswordHash, UserType 
-			FROM Users 
-			WHERE Email = ? AND UserType = ? AND IsActive = true`,
-			creds.Email, creds.UserType).Scan(&user.UserID, &user.PasswordHash, &user.UserType)
+		var err error
+		
+		// For drivers, we treat the email field as phone number
+		if creds.UserType == "driver" {
+			err = db.QueryRow(`
+				SELECT u.UserID, u.PasswordHash, u.UserType, u.PasswordResetRequired 
+				FROM Users u
+				JOIN Drivers d ON u.UserID = d.UserID
+				WHERE d.PhoneNumber = ? AND u.UserType = ? AND u.IsActive = true`,
+				creds.Email, creds.UserType).Scan(&user.UserID, &user.PasswordHash, &user.UserType, &user.PasswordResetRequired)
+		} else {
+			// For other user types, use email as usual
+			err = db.QueryRow(`
+				SELECT UserID, PasswordHash, UserType, PasswordResetRequired 
+				FROM Users 
+				WHERE Email = ? AND UserType = ? AND IsActive = true`,
+				creds.Email, creds.UserType).Scan(&user.UserID, &user.PasswordHash, &user.UserType, &user.PasswordResetRequired)
+		}
 
 		if err != nil {
 			if err == sql.ErrNoRows {
@@ -154,6 +200,7 @@ func HandleLogin(db *sql.DB) http.HandlerFunc {
 			"success":  true,
 			"token":    token,
 			"userType": user.UserType,
+			"passwordResetRequired": user.PasswordResetRequired,
 		})
 	}
 }
@@ -294,8 +341,82 @@ func HandleRegister(db *sql.DB) http.HandlerFunc {
 	}
 }
 
+func HandlePasswordChange(db *sql.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Extract user ID from context (set by auth middleware)
+		userID, ok := r.Context().Value("userID").(int)
+		if !ok {
+			http.Error(w, "Authentication required", http.StatusUnauthorized)
+			return
+		}
+
+		// Parse request
+		var req struct {
+			CurrentPassword string `json:"currentPassword"`
+			NewPassword     string `json:"newPassword"`
+		}
+
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request format", http.StatusBadRequest)
+			return
+		}
+
+		// Validate new password
+		if len(req.NewPassword) < 8 {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Password must be at least 8 characters long",
+			})
+			return
+		}
+
+		// Verify current password
+		var passwordHash string
+		var resetRequired bool
+		err := db.QueryRow("SELECT PasswordHash, PasswordResetRequired FROM Users WHERE UserID = ?", userID).
+			Scan(&passwordHash, &resetRequired)
+		if err != nil {
+			log.Printf("Error fetching user password data: %v", err)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		// Check current password
+		if !CheckPasswordHash(req.CurrentPassword, passwordHash) {
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Current password is incorrect",
+			})
+			return
+		}
+
+		// Hash new password
+		hashedNewPassword, err := HashPassword(req.NewPassword)
+		if err != nil {
+			log.Printf("Error hashing new password: %v", err)
+			http.Error(w, "Error processing password", http.StatusInternalServerError)
+			return
+		}
+
+		// Update password in database
+		_, err = db.Exec("UPDATE Users SET PasswordHash = ?, PasswordResetRequired = false WHERE UserID = ?",
+			hashedNewPassword, userID)
+		if err != nil {
+			log.Printf("Error updating password: %v", err)
+			http.Error(w, "Database error", http.StatusInternalServerError)
+			return
+		}
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": true,
+			"message": "Password changed successfully",
+		})
+	}
+}
+
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		tokenString := r.Header.Get("Authorization")
 		if tokenString == "" {
 			json.NewEncoder(w).Encode(map[string]interface{}{
