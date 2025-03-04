@@ -57,7 +57,7 @@
                 <h1 class="dashboard-title">Driver Management</h1>
                 <div class="panel-content">
                     <div class="action-bar">
-                        <button id="addDriverBtn" class="btn-primary" onclick="document.getElementById('driverModal').style.display='block';">
+                        <button id="addDriverBtn" class="btn-primary">
                             <i class="fas fa-plus"></i> Add New Driver
                         </button>
                     </div>
@@ -85,7 +85,7 @@
         <!-- Add/Edit Driver Modal -->
         <div id="driverModal" class="modal">
             <div class="modal-content">
-                <span class="close" onclick="document.getElementById('driverModal').style.display='none';">&times;</span>
+                <span class="close">&times;</span>
                 <h2 id="modalTitle">Add New Driver</h2>
                 <form id="driverForm">
                     <input type="hidden" id="driverId">
@@ -113,6 +113,6 @@
     </div>
 
     <!-- Application Scripts -->
-    <script src="/static/js/driver-management.js?v=1"></script>
+    <script src="/static/js/driver-management.js?v=2"></script>
 </body>
 </html>

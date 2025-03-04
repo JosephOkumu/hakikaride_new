@@ -9,8 +9,31 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeEventListeners() {
+    // Add event listener for opening the modal
+    const addDriverBtn = document.getElementById('addDriverBtn');
+    if (addDriverBtn) {
+        addDriverBtn.addEventListener('click', function() {
+            // Reset form and prepare for add mode
+            const driverForm = document.getElementById('driverForm');
+            if (driverForm) driverForm.reset();
+            
+            document.getElementById('driverModal').style.display = 'block';
+            document.getElementById('modalTitle').textContent = 'Add New Driver';
+            document.getElementById('submitDriverBtn').textContent = 'Add Driver';
+            isEditMode = false;
+        });
+    }
+    
+    // Add event listener for closing the modal
+    const closeButtons = document.querySelectorAll('.close');
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('driverModal').style.display = 'none';
+        });
+    });
+    
+    // Form submission
     const driverForm = document.getElementById('driverForm');
-
     if (driverForm) {
         driverForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -24,8 +47,14 @@ function initializeEventListeners() {
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch('/api/admin/drivers/add', {
-                    method: 'POST',
+                const url = isEditMode ? 
+                    `/api/admin/drivers/update/${document.getElementById('driverId').value}` : 
+                    '/api/admin/drivers/add';
+                
+                const method = isEditMode ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -39,14 +68,22 @@ function initializeEventListeners() {
                     driverForm.reset();
                     loadDrivers();
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to add driver'));
+                    alert('Error: ' + (data.message || 'Failed to process driver data'));
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Error adding driver. Please try again.');
+                alert('Error processing driver data. Please try again.');
             }
         });
     }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('driverModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 }
 
 function loadDrivers() {
@@ -74,15 +111,15 @@ function renderDrivers(drivers) {
     drivers.forEach(driver => {
         const row = document.createElement('tr');
         row.innerHTML = `
-            <td>${driver.firstName}</td>
-            <td>${driver.lastName}</td>
-            <td>${driver.phoneNumber}</td>
+            <td>${driver.firstName || ''}</td>
+            <td>${driver.lastName || ''}</td>
+            <td>${driver.phoneNumber || ''}</td>
             <td>${driver.busNumberPlate || 'Not Assigned'}</td>
             <td>
-                <button class="btn-edit" data-id="${driver.id}">
+                <button class="btn-edit" data-id="${driver.driverId || driver.id}">
                     <i class="fas fa-edit"></i> Edit
                 </button>
-                <button class="btn-delete" data-id="${driver.id}">
+                <button class="btn-delete" data-id="${driver.driverId || driver.id}">
                     <i class="fas fa-trash"></i> Delete
                 </button>
             </td>
@@ -94,7 +131,7 @@ function renderDrivers(drivers) {
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const driverId = e.currentTarget.dataset.id;
-            const driver = allDrivers.find(d => d.id === driverId);
+            const driver = allDrivers.find(d => d.driverId === driverId || d.id === driverId);
             if (driver) editDriver(driver);
         });
     });
@@ -109,9 +146,12 @@ function renderDrivers(drivers) {
 
 function editDriver(driver) {
     const modal = document.getElementById('driverModal');
-    document.getElementById('firstName').value = driver.firstName;
-    document.getElementById('lastName').value = driver.lastName;
-    document.getElementById('phoneNumber').value = driver.phoneNumber;
+    if (!modal) return;
+    
+    document.getElementById('driverId').value = driver.driverId || driver.id;
+    document.getElementById('firstName').value = driver.firstName || '';
+    document.getElementById('lastName').value = driver.lastName || '';
+    document.getElementById('phoneNumber').value = driver.phoneNumber || '';
     document.getElementById('busId').value = driver.busNumberPlate || '';
     
     document.getElementById('modalTitle').textContent = 'Edit Driver';
@@ -124,204 +164,6 @@ function deleteDriver(driverId) {
     if (confirm('Are you sure you want to delete this driver?')) {
         const token = localStorage.getItem('token');
         fetch(`/api/admin/drivers/delete/${driverId}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                loadDrivers();
-            } else {
-                alert('Error: ' + (data.message || 'Failed to delete driver'));
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error deleting driver. Please try again.');
-        });
-    }
-}
-    const token = localStorage.getItem('token');
-    fetch('/api/admin/buses', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const busSelect = document.getElementById('busId');
-            data.buses.forEach(bus => {
-                const option = document.createElement('option');
-                option.value = bus.busId;
-                option.textContent = bus.numberPlate;
-                busSelect.appendChild(option);
-            });
-        }
-    })
-    .catch(error => console.error('Error loading buses:', error));
-
-
-function loadDrivers() {
-    const token = localStorage.getItem('token');
-    fetch('/api/admin/drivers/list', {
-        headers: {
-            'Authorization': `Bearer ${token}`
-        }
-    })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                allDrivers = data.drivers;
-                renderDrivers(allDrivers);
-            }
-        })
-        .catch(error => console.error('Error loading drivers:', error));
-}
-
-function renderDrivers(drivers) {
-    const tbody = document.getElementById('driversTableBody');
-    if (!tbody) return;
-    
-    tbody.innerHTML = '';
-    drivers.forEach(driver => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${driver.firstName}</td>
-            <td>${driver.lastName}</td>
-            <td>${driver.phoneNumber}</td>
-            <td>${driver.busNumberPlate || 'Not Assigned'}</td>
-            <td>
-                <button class="btn-edit" data-driver='${JSON.stringify(driver)}'>
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn-delete" data-id="${driver.driverId}">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
-    });
-
-    // Add event listeners to the new buttons
-    document.querySelectorAll('.btn-edit').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const driver = JSON.parse(e.currentTarget.dataset.driver);
-            editDriver(driver);
-        });
-    });
-
-    document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const driverId = e.currentTarget.dataset.id;
-            deleteDriver(driverId);
-        });
-    });
-}
-
-function initializeEventListeners() {
-    // Modal elements
-    const driverModal = document.getElementById('driverModal');
-    const closeBtn = document.querySelector('.close');
-    const driverForm = document.getElementById('driverForm');
-    const addDriverBtn = document.getElementById('addDriverBtn');
-    const searchInput = document.getElementById('driverSearchInput');
-
-    // Add Driver button
-    if (addDriverBtn) {
-        addDriverBtn.addEventListener('click', () => {
-            isEditMode = false;
-            document.getElementById('modalTitle').textContent = 'Add New Driver';
-            document.getElementById('submitDriverBtn').textContent = 'Add Driver';
-            driverForm.reset();
-            document.getElementById('driverId').value = '';
-            document.getElementById('userId').value = '';
-            driverModal.style.display = 'block';
-        });
-    }
-
-    // Close modal button
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            driverModal.style.display = 'none';
-        });
-    }
-
-    // Click outside modal to close
-    window.addEventListener('click', (e) => {
-        if (e.target === driverModal) {
-            driverModal.style.display = 'none';
-        }
-    });
-
-    // Form submission
-    if (driverForm) {
-        driverForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const formData = {
-                driverId: document.getElementById('driverId').value,
-                userId: document.getElementById('userId').value,
-                firstName: document.getElementById('firstName').value,
-                lastName: document.getElementById('lastName').value,
-                phoneNumber: document.getElementById('phoneNumber').value,
-                busId: document.getElementById('busId').value || null
-            };
-
-            const url = isEditMode ? '/api/admin/drivers/update' : '/api/admin/drivers/add';
-            const method = isEditMode ? 'PUT' : 'POST';
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                const data = await response.json();
-                if (data.success) {
-                    driverModal.style.display = 'none';
-                    driverForm.reset();
-                    loadDrivers();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error processing request');
-            }
-        });
-    }
-
-
-}
-
-function editDriver(driver) {
-    isEditMode = true;
-    document.getElementById('modalTitle').textContent = 'Edit Driver';
-    document.getElementById('submitDriverBtn').textContent = 'Update Driver';
-    
-    // Fill form fields
-    document.getElementById('driverId').value = driver.driverId;
-    document.getElementById('userId').value = driver.userId;
-    document.getElementById('firstName').value = driver.firstName;
-    document.getElementById('lastName').value = driver.lastName;
-    document.getElementById('phoneNumber').value = driver.phoneNumber;
-    document.getElementById('busId').value = driver.busId || '';
-    
-    document.getElementById('driverModal').style.display = 'block';
-}
-
-function deleteDriver(driverId) {
-    if (confirm('Are you sure you want to delete this driver?')) {
-        const token = localStorage.getItem('token');
-        fetch(`/api/admin/drivers/delete?id=${driverId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
