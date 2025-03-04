@@ -61,6 +61,9 @@ func main() {
 	// Protected API routes
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.Use(auth.AuthMiddleware)
+	
+	// Password change endpoint (requires authentication)
+	apiRouter.HandleFunc("/auth/change-password", auth.HandlePasswordChange(db)).Methods("POST")
 
 	// Admin routes
 	adminRouter := apiRouter.PathPrefix("/admin").Subrouter()
@@ -70,7 +73,7 @@ func main() {
 	// Driver management routes
 	adminRouter.HandleFunc("/drivers/add", api.HandleAddDriver(db)).Methods("POST")
 	adminRouter.HandleFunc("/drivers/update", api.HandleUpdateDriver(db)).Methods("PUT")
-	adminRouter.HandleFunc("/drivers/delete", api.HandleDeleteDriver(db)).Methods("DELETE")
+	adminRouter.HandleFunc("/drivers/delete/{id:[0-9]+}", api.HandleDeleteDriver(db)).Methods("DELETE")
 	adminRouter.HandleFunc("/drivers/list", api.HandleListDriversDetailed(db)).Methods("GET")
 
 	// Other admin routes
@@ -105,6 +108,7 @@ func main() {
 	// Template routes
 	r.HandleFunc("/", serveLoginPage)
 	r.HandleFunc("/register", serveRegisterPage)
+	r.HandleFunc("/change-password", serveChangePasswordPage)
 	r.HandleFunc("/driver/dashboard", serveDriverDashboard)
 	r.HandleFunc("/parent/dashboard", serveParentDashboard)
 	r.HandleFunc("/admin/dashboard", serveAdminDashboard)
@@ -207,6 +211,15 @@ func serveStudentManagement(w http.ResponseWriter, r *http.Request) {
 
 func serveDriverManagement(w http.ResponseWriter, r *http.Request) {
 	templ, err := template.ParseFiles("templates/driver-management.html")
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+	templ.Execute(w, nil)
+}
+
+func serveChangePasswordPage(w http.ResponseWriter, r *http.Request) {
+	templ, err := template.ParseFiles("templates/change-password.html")
 	if err != nil {
 		http.Error(w, "Error loading template", http.StatusInternalServerError)
 		return
