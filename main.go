@@ -80,6 +80,12 @@ func main() {
 	adminRouter.HandleFunc("/routes", api.HandleListRoutes(db)).Methods("GET")
 	adminRouter.HandleFunc("/buses", api.HandleListBuses(db)).Methods("GET")
 
+	// Bus management routes
+	adminRouter.HandleFunc("/buses/add", api.HandleAddBus(db)).Methods("POST")
+	adminRouter.HandleFunc("/buses/update", api.HandleUpdateBus(db)).Methods("PUT")
+	adminRouter.HandleFunc("/buses/delete/{id:[0-9]+}", api.HandleDeleteBus(db)).Methods("DELETE")
+	adminRouter.HandleFunc("/buses/list", api.HandleListBusesDetailed(db)).Methods("GET")
+
 	// Student management routes
 	adminRouter.HandleFunc("/students/add", api.HandleAddStudent(db)).Methods("POST")
 	adminRouter.HandleFunc("/students/bulk-upload", api.HandleBulkUploadStudents(db)).Methods("POST")
@@ -114,6 +120,7 @@ func main() {
 	r.HandleFunc("/admin/dashboard", serveAdminDashboard)
 	r.HandleFunc("/admin/students", serveStudentManagement)
 	r.HandleFunc("/admin/drivers", serveDriverManagement)
+	r.HandleFunc("/admin/fleet", serveFleetManagement)
 
 	// Start server
 	port := os.Getenv("PORT")
@@ -211,6 +218,15 @@ func serveStudentManagement(w http.ResponseWriter, r *http.Request) {
 
 func serveDriverManagement(w http.ResponseWriter, r *http.Request) {
 	templ, err := template.ParseFiles("templates/driver-management.html")
+	if err != nil {
+		http.Error(w, "Error loading template", http.StatusInternalServerError)
+		return
+	}
+	templ.Execute(w, nil)
+}
+
+func serveFleetManagement(w http.ResponseWriter, r *http.Request) {
+	templ, err := template.ParseFiles("templates/fleet-management.html")
 	if err != nil {
 		http.Error(w, "Error loading template", http.StatusInternalServerError)
 		return
