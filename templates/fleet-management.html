@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HakikaRide - Driver Management</title>
+    <title>HakikaRide - Fleet Management</title>
     <link rel="stylesheet" href="/static/css/admin-dashboard.css">
     <link rel="stylesheet" href="/static/css/admin-dashboard-new.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
                     <i class="fas fa-tachometer-alt"></i>
                     <span>Dashboard</span>
                 </li>
-                <li onclick="window.location.href='/admin/fleet'">
+                <li class="active" onclick="window.location.href='/admin/fleet'">
                     <i class="fas fa-bus"></i>
                     <span>Fleet Management</span>
                 </li>
@@ -36,11 +36,15 @@
                     <i class="fas fa-user-graduate"></i>
                     <span>Students</span>
                 </li>
+                <li onclick="window.location.href='/admin/drivers'">
+                    <i class="fas fa-id-card"></i>
+                    <span>Drivers</span>
+                </li>
                 <li>
                     <i class="fas fa-route"></i>
                     <span>Route Management</span>
                 </li>
-                <li class="active">
+                <li onclick="window.location.href='/admin/drivers'">
                     <i class="fas fa-id-card"></i>
                     <span>Driver Management</span>
                 </li>
@@ -54,27 +58,26 @@
         <!-- Main Content Area -->
         <div class="main-content">
             <div class="content-panel">
-                <h1 class="dashboard-title">Driver Management</h1>
+                <h1 class="dashboard-title">Fleet Management</h1>
                 <div class="panel-content">
                     <div class="action-bar">
-                        <button id="addDriverBtn" class="btn-primary">
-                            <i class="fas fa-plus"></i> Add New Driver
+                        <button id="addBusBtn" class="btn-primary">
+                            <i class="fas fa-plus"></i> Add New Bus
                         </button>
                     </div>
 
                     <div class="table-container">
-                        <table id="driversTable" class="data-table">
+                        <table id="busesTable" class="data-table">
                             <thead>
                                 <tr>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Phone Number</th>
-                                    <th>Bus Number Plate</th>
+                                    <th>Number Plate</th>
+                                    <th>Route</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="driversTableBody">
-                                <!-- Drivers will be loaded here -->
+                            <tbody id="busesTableBody">
+                                <!-- Buses will be loaded here -->
                             </tbody>
                         </table>
                     </div>
@@ -82,37 +85,31 @@
             </div>
         </div>
 
-        <!-- Add/Edit Driver Modal -->
-        <div id="driverModal" class="modal">
+        <!-- Add/Edit Bus Modal -->
+        <div id="busModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h2 id="modalTitle">Add New Driver</h2>
-                <form id="driverForm">
-                    <input type="hidden" id="driverId">
-                    <input type="hidden" id="userId">
+                <h2 id="modalTitle">Add New Bus</h2>
+                <form id="busForm">
+                    <input type="hidden" id="busId">
                     <div class="form-group">
-                        <label for="firstName">First Name:</label>
-                        <input type="text" id="firstName" name="firstName" required>
+                        <label for="numberPlate">Number Plate:</label>
+                        <input type="text" id="numberPlate" name="numberPlate" required>
                     </div>
                     <div class="form-group">
-                        <label for="lastName">Last Name:</label>
-                        <input type="text" id="lastName" name="lastName" required>
+                        <label for="routeId">Route:</label>
+                        <select id="routeId" name="routeId" required>
+                            <option value="">Select a route</option>
+                            <!-- Routes will be loaded here -->
+                        </select>
                     </div>
-                    <div class="form-group">
-                        <label for="phoneNumber">Phone Number:</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="busId">Bus Number Plate:</label>
-                        <input type="text" id="busId" name="busId" required>
-                    </div>
-                    <button type="submit" class="btn-primary" id="submitDriverBtn">Add Driver</button>
+                    <button type="submit" class="btn-primary" id="submitBusBtn">Add Bus</button>
                 </form>
             </div>
         </div>
     </div>
 
     <!-- Application Scripts -->
-    <script src="/static/js/driver-management.js?v=2"></script>
+    <script src="/static/js/fleet-management.js"></script>
 </body>
 </html>
