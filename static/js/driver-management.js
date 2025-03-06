@@ -66,9 +66,17 @@ function initializeEventListeners() {
                 const method = isEditMode ? 'PUT' : 'POST';
                 
                 if (isEditMode) {
-                    // For edit mode, include the driver ID in the form data
-                    formData.driverId = document.getElementById('driverId').value;
+                    // For edit mode, include the driver ID and user ID in the form data
+                    formData.driverId = parseInt(document.getElementById('driverId').value);
+                    
+                    // Add userId if it exists
+                    const userIdField = document.getElementById('userId');
+                    if (userIdField && userIdField.value) {
+                        formData.userId = parseInt(userIdField.value);
+                    }
                 }
+                
+                console.log('Submitting form data:', formData);
                 
                 const response = await fetch(url, {
                     method: method,
@@ -137,6 +145,7 @@ function loadDrivers() {
     .then(data => {
         if (data.success) {
             allDrivers = data.drivers || [];
+            console.log('Loaded drivers:', allDrivers);
             renderDrivers(allDrivers);
         } else {
             console.error('Error loading drivers:', data.message);
@@ -180,8 +189,15 @@ function renderDrivers(drivers) {
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const driverId = e.currentTarget.dataset.id;
-            const driver = allDrivers.find(d => d.driverId === driverId || d.id === driverId);
-            if (driver) editDriver(driver);
+            console.log('Edit button clicked for driver ID:', driverId);
+            console.log('All drivers:', allDrivers);
+            const driver = allDrivers.find(d => d.driverId === parseInt(driverId) || d.driverId === driverId || d.id === parseInt(driverId) || d.id === driverId);
+            console.log('Found driver:', driver);
+            if (driver) {
+                editDriver(driver);
+            } else {
+                console.error('Driver not found with ID:', driverId);
+            }
         });
     });
 
@@ -194,10 +210,25 @@ function renderDrivers(drivers) {
 }
 
 function editDriver(driver) {
+    console.log('Edit driver function called with driver:', driver);
     const modal = document.getElementById('driverModal');
-    if (!modal) return;
+    if (!modal) {
+        console.error('Driver modal not found');
+        return;
+    }
     
-    document.getElementById('driverId').value = driver.driverId || driver.id;
+    // Set the hidden driver ID field
+    const driverIdField = document.getElementById('driverId');
+    driverIdField.value = driver.driverId || driver.id;
+    console.log('Set driverId to:', driverIdField.value);
+    
+    // Set user ID if available
+    if (driver.userId) {
+        const userIdField = document.getElementById('userId');
+        if (userIdField) userIdField.value = driver.userId;
+        console.log('Set userId to:', driver.userId);
+    }
+    
     document.getElementById('firstName').value = driver.firstName || '';
     document.getElementById('lastName').value = driver.lastName || '';
     document.getElementById('phoneNumber').value = driver.phoneNumber || '';
@@ -207,6 +238,7 @@ function editDriver(driver) {
     document.getElementById('submitDriverBtn').textContent = 'Update Driver';
     modal.style.display = 'block';
     isEditMode = true;
+    console.log('Edit mode enabled, modal displayed');
 }
 
 function deleteDriver(driverId) {

@@ -1,8 +1,10 @@
 package api
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -155,14 +157,36 @@ func HandleAddDriver(db *sql.DB) http.HandlerFunc {
 func HandleUpdateDriver(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		
+		// Read the body for logging
+		bodyBytes, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Error reading request body: %v", err)
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"message": "Error reading request body",
+			})
+			return
+		}
+		
+		// Log the received body
+		log.Printf("Received update driver request body: %s", string(bodyBytes))
+		
+		// Recreate the body for further processing
+		r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+		
 		var driver Driver
 		if err := json.NewDecoder(r.Body).Decode(&driver); err != nil {
+			log.Printf("Error decoding driver JSON: %v", err)
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"success": false,
 				"message": "Invalid request body",
 			})
 			return
 		}
+		
+		// Log the decoded driver
+		log.Printf("Decoded driver: %+v", driver)
 
 		tx, err := db.Begin()
 		if err != nil {
