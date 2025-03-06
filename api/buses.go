@@ -261,10 +261,9 @@ func HandleDeleteBus(db *sql.DB) http.HandlerFunc {
 func HandleListBusesDetailed(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(`
-			SELECT b.BusID, b.NumberPlate, r.RouteID, r.RouteName,
+			SELECT b.BusID, b.NumberPlate, b.Route,
 			       CASE WHEN t.TripID IS NOT NULL THEN 'In Trip' ELSE 'Available' END as Status
 			FROM Buses b
-			LEFT JOIN Routes r ON b.RouteID = r.RouteID
 			LEFT JOIN Trips t ON b.BusID = t.BusID AND t.Status = 'in_progress'
 			WHERE b.IsActive = true
 			ORDER BY b.NumberPlate`)
@@ -283,18 +282,17 @@ func HandleListBusesDetailed(db *sql.DB) http.HandlerFunc {
 			var bus struct {
 				BusID       int
 				NumberPlate string
-				RouteID     int
-				RouteName   string
+				Route       string
 				Status      string
 			}
-			if err := rows.Scan(&bus.BusID, &bus.NumberPlate, &bus.RouteID, &bus.RouteName, &bus.Status); err != nil {
+			if err := rows.Scan(&bus.BusID, &bus.NumberPlate, &bus.Route, &bus.Status); err != nil {
 				continue
 			}
 			buses = append(buses, map[string]interface{}{
 				"id":     bus.BusID,
 				"plate":  bus.NumberPlate,
-				"routeId": bus.RouteID,
-				"route":  bus.RouteName,
+				"routeId": bus.Route,
+				"route":  bus.Route,
 				"status": bus.Status,
 			})
 		}

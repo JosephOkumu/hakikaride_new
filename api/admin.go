@@ -133,8 +133,8 @@ func HandleListRoutes(db *sql.DB) http.HandlerFunc {
 			       COUNT(DISTINCT b.BusID) as AssignedBuses,
 			       COUNT(DISTINCT t.TripID) as ActiveTrips
 			FROM Routes r
-			LEFT JOIN Buses b ON r.RouteID = b.RouteID AND b.IsActive = true
-			LEFT JOIN Trips t ON r.RouteID = t.RouteID AND t.Status = 'in_progress'
+			LEFT JOIN Buses b ON b.Route = r.RouteName AND b.IsActive = true
+			LEFT JOIN Trips t ON t.Route = r.RouteName AND t.Status = 'in_progress'
 			WHERE r.IsActive = true
 			GROUP BY r.RouteID`)
 		if err != nil {
@@ -180,10 +180,9 @@ func HandleListRoutes(db *sql.DB) http.HandlerFunc {
 func HandleListBuses(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(`
-			SELECT b.BusID, b.NumberPlate, r.RouteName,
+			SELECT b.BusID, b.NumberPlate, b.Route,
 			       CASE WHEN t.TripID IS NOT NULL THEN 'In Trip' ELSE 'Available' END as Status
 			FROM Buses b
-			LEFT JOIN Routes r ON b.RouteID = r.RouteID
 			LEFT JOIN Trips t ON b.BusID = t.BusID AND t.Status = 'in_progress'
 			WHERE b.IsActive = true`)
 		if err != nil {
@@ -201,16 +200,16 @@ func HandleListBuses(db *sql.DB) http.HandlerFunc {
 			var bus struct {
 				BusID       int
 				NumberPlate string
-				RouteName   string
+				Route       string
 				Status      string
 			}
-			if err := rows.Scan(&bus.BusID, &bus.NumberPlate, &bus.RouteName, &bus.Status); err != nil {
+			if err := rows.Scan(&bus.BusID, &bus.NumberPlate, &bus.Route, &bus.Status); err != nil {
 				continue
 			}
 			buses = append(buses, map[string]interface{}{
 				"id": bus.BusID,
 				"plate": bus.NumberPlate,
-				"route": bus.RouteName,
+				"route": bus.Route,
 				"status": bus.Status,
 			})
 		}
