@@ -239,8 +239,8 @@ func HandleDeleteBus(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Soft delete the bus
-		_, err = db.Exec("UPDATE Buses SET IsActive = false WHERE BusID = ?", busID)
+		// Hard delete the bus from the database
+		_, err = db.Exec("DELETE FROM Buses WHERE BusID = ?", busID)
 		if err != nil {
 			log.Printf("Error deleting bus: %v", err)
 			json.NewEncoder(w).Encode(map[string]interface{}{
