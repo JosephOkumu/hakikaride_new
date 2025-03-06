@@ -95,9 +95,8 @@ func createTables(db *sql.DB) error {
 	CREATE TABLE IF NOT EXISTS Buses (
 		BusID INTEGER PRIMARY KEY AUTOINCREMENT,
 		NumberPlate VARCHAR(50) NOT NULL UNIQUE,
-		RouteID INTEGER NOT NULL,
-		IsActive BOOLEAN DEFAULT TRUE,
-		FOREIGN KEY (RouteID) REFERENCES Routes(RouteID)
+		Route VARCHAR(255) NOT NULL,
+		IsActive BOOLEAN DEFAULT TRUE
 	);
 
 	CREATE TABLE IF NOT EXISTS Drivers (
@@ -116,13 +115,12 @@ func createTables(db *sql.DB) error {
 		TripID INTEGER PRIMARY KEY AUTOINCREMENT,
 		DriverID INTEGER NOT NULL,
 		BusID INTEGER NOT NULL,
-		RouteID INTEGER NOT NULL,
+		Route VARCHAR(255) NOT NULL,
 		StartTime DATETIME DEFAULT CURRENT_TIMESTAMP,
 		EndTime DATETIME,
 		Status VARCHAR(20) CHECK (Status IN ('scheduled', 'in_progress', 'completed', 'cancelled')) DEFAULT 'scheduled',
 		FOREIGN KEY (DriverID) REFERENCES Drivers(DriverID),
-		FOREIGN KEY (BusID) REFERENCES Buses(BusID),
-		FOREIGN KEY (RouteID) REFERENCES Routes(RouteID)
+		FOREIGN KEY (BusID) REFERENCES Buses(BusID)
 	);
 
 	CREATE TABLE IF NOT EXISTS LocationUpdates (

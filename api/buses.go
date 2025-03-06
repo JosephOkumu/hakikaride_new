@@ -35,18 +35,19 @@ func HandleAddBus(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		routeID, err := strconv.Atoi(request.RouteId)
-		if err != nil {
+		// Now we're using routeId as a string directly, no need to convert to int
+		routeName := request.RouteId
+		if routeName == "" {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"success": false,
-				"message": "Invalid route ID",
+				"message": "Route is required",
 			})
 			return
 		}
 
 		// Check if number plate already exists
 		var count int
-		err = db.QueryRow("SELECT COUNT(*) FROM Buses WHERE NumberPlate = ?", request.NumberPlate).Scan(&count)
+		err := db.QueryRow("SELECT COUNT(*) FROM Buses WHERE NumberPlate = ?", request.NumberPlate).Scan(&count)
 		if err != nil {
 			log.Printf("Error checking for existing number plate: %v", err)
 			json.NewEncoder(w).Encode(map[string]interface{}{
@@ -64,10 +65,10 @@ func HandleAddBus(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Insert new bus
+		// Insert new bus with route name instead of ID
 		result, err := db.Exec(
-			"INSERT INTO Buses (NumberPlate, RouteID, IsActive) VALUES (?, ?, true)",
-			request.NumberPlate, routeID,
+			"INSERT INTO Buses (NumberPlate, Route, IsActive) VALUES (?, ?, true)",
+			request.NumberPlate, routeName,
 		)
 		if err != nil {
 			log.Printf("Error inserting bus: %v", err)
@@ -124,11 +125,12 @@ func HandleUpdateBus(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		routeID, err := strconv.Atoi(request.RouteId)
-		if err != nil {
+		// Now we're using routeId as a string directly, no need to convert to int
+		routeName := request.RouteId
+		if routeName == "" {
 			json.NewEncoder(w).Encode(map[string]interface{}{
 				"success": false,
-				"message": "Invalid route ID",
+				"message": "Route is required",
 			})
 			return
 		}
@@ -154,10 +156,10 @@ func HandleUpdateBus(db *sql.DB) http.HandlerFunc {
 			return
 		}
 
-		// Update bus
+		// Update bus with route name instead of ID
 		_, err = db.Exec(
-			"UPDATE Buses SET NumberPlate = ?, RouteID = ? WHERE BusID = ?",
-			request.NumberPlate, routeID, busID,
+			"UPDATE Buses SET NumberPlate = ?, Route = ? WHERE BusID = ?",
+			request.NumberPlate, routeName, busID,
 		)
 		if err != nil {
 			log.Printf("Error updating bus: %v", err)

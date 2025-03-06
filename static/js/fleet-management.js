@@ -192,22 +192,10 @@ function loadRoutes() {
     });
 }
 
+// No longer need to populate dropdown as we're using an input field now
 function populateRouteDropdown(routes) {
-    const routeSelect = document.getElementById('routeId');
-    if (!routeSelect) return;
-    
-    // Clear all options except the first one (placeholder)
-    while (routeSelect.options.length > 1) {
-        routeSelect.remove(1);
-    }
-    
-    // Add route options
-    routes.forEach(route => {
-        const option = document.createElement('option');
-        option.value = route.id;
-        option.textContent = route.name;
-        routeSelect.appendChild(option);
-    });
+    // This function is kept as a placeholder to avoid breaking existing code references
+    // but it no longer performs any dropdown population
 }
 
 function renderBuses(buses) {
@@ -257,14 +245,8 @@ function editBus(bus) {
     document.getElementById('busId').value = bus.id;
     document.getElementById('numberPlate').value = bus.plate || '';
     
-    // Select the correct route in the dropdown
-    const routeSelect = document.getElementById('routeId');
-    for (let i = 0; i < routeSelect.options.length; i++) {
-        if (routeSelect.options[i].textContent === bus.route) {
-            routeSelect.selectedIndex = i;
-            break;
-        }
-    }
+    // Set the route value in the input field
+    document.getElementById('routeId').value = bus.route || '';
     
     document.getElementById('modalTitle').textContent = 'Edit Bus';
     document.getElementById('submitBusBtn').textContent = 'Update Bus';
