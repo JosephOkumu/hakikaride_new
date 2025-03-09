@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Meta tags for Firefox compatibility -->
+    <meta http-equiv="origin-trial" content="firefox-compatibility">
     <title>HakikaRide - Driver Dashboard</title>
     <link rel="stylesheet" href="/static/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
@@ -33,7 +36,9 @@
             </div>
         </div>
 
-        <div class="map-container" id="mapContainer"></div>
+        <div class="map-container" id="mapContainer" style="height: 400px; border: 2px solid #ccc; background-color: #e0e0e0;">
+            <div id="mapLoadingStatus" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 5px 10px; border-radius: 5px; z-index: 999; display: none;">Map loading...</div>
+        </div>
 
         <div class="driver-controls">
             <button class="btn btn-primary" id="startTrip">Start Trip</button>
@@ -47,13 +52,19 @@
                 <!-- Student checklist will be populated dynamically -->
             </div>
         </div>
+        
+        <!-- Debug Area -->
+        <div id="debugArea" style="background-color: #f0f0f0; border: 1px solid #ccc; padding: 10px; margin: 10px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
+            <h3>Debug Information</h3>
+            <pre id="debugOutput">Loading...</pre>
+        </div>
     </div>
 
     <!-- HERE Maps Scripts -->
-    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js"></script>
-    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js"></script>
-    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js"></script>
-    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" type="text/javascript" charset="utf-8"></script>
     
     <!-- Application Scripts -->
     <script src="/static/js/driver-dashboard.js"></script>

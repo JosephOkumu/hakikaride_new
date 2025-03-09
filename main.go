@@ -15,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
+	"encoding/json"
 )
 
 var (
@@ -27,7 +28,6 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Printf("Warning: .env file not found: %v", err)
 	}
-
 
 
 	// Initialize database
@@ -54,9 +54,17 @@ func main() {
 	fs := http.FileServer(http.Dir("static"))
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
 
+	// Serve favicon.ico
+	r.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "./static/favicon.ico")
+	})
+
 	// Auth routes
 	r.HandleFunc("/api/auth/login", auth.HandleLogin(db)).Methods("POST")
 	r.HandleFunc("/api/auth/register", auth.HandleRegister(db)).Methods("POST")
+
+	// Config routes - accessible without authentication
+	r.HandleFunc("/api/config/here-api-key", api.HandleHereApiKey()).Methods("GET")
 
 	// Protected API routes
 	apiRouter := r.PathPrefix("/api").Subrouter()
@@ -64,6 +72,34 @@ func main() {
 	
 	// Password change endpoint (requires authentication)
 	apiRouter.HandleFunc("/auth/change-password", auth.HandlePasswordChange(db)).Methods("POST")
+
+	// Mock driver info API for development
+	apiRouter.HandleFunc("/driver/info", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		response := map[string]interface{}{
+			"success": true,
+			"firstName": "John",
+			"lastName": "Driver",
+			"driverId": 1,
+		}
+		json.NewEncoder(w).Encode(response)
+	}).Methods("GET")
+	
+	// Mock student list API for development
+	apiRouter.HandleFunc("/driver/students", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		students := []map[string]interface{}{
+			{"id": 1, "name": "Alice Smith", "isPickedUp": false},
+			{"id": 2, "name": "Bob Johnson", "isPickedUp": false},
+			{"id": 3, "name": "Carol Williams", "isPickedUp": false},
+			{"id": 4, "name": "David Brown", "isPickedUp": false},
+		}
+		response := map[string]interface{}{
+			"success": true,
+			"students": students,
+		}
+		json.NewEncoder(w).Encode(response)
+	}).Methods("GET")
 
 	// Admin routes
 	adminRouter := apiRouter.PathPrefix("/admin").Subrouter()
@@ -108,19 +144,25 @@ func main() {
 	apiRouter.HandleFunc("/attendance/dropoff", api.HandleStudentDropoff(db)).Methods("POST")
 	apiRouter.HandleFunc("/attendance/trip", api.HandleGetTripAttendance(db)).Methods("GET")
 
-	// WebSocket route
-	apiRouter.HandleFunc("/ws", websocket.HandleWebSocket(hub))
+	// WebSocket endpoint for real-time communication
+	r.HandleFunc("/ws", websocket.HandleWebSocket(hub))
+	
+	// For Firefox compatibility - add endpoint at old location
+	r.HandleFunc("/ws/driver", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("Redirecting old WebSocket endpoint from /ws/driver to /ws")
+		http.Redirect(w, r, "/ws", http.StatusTemporaryRedirect)
+	})
 
 	// Template routes
 	r.HandleFunc("/", serveLoginPage)
 	r.HandleFunc("/register", serveRegisterPage)
-	r.HandleFunc("/change-password", serveChangePasswordPage)
+	r.Handle("/change-password", auth.AuthMiddleware(http.HandlerFunc(serveChangePasswordPage)))
 	r.HandleFunc("/driver/dashboard", serveDriverDashboard)
 	r.HandleFunc("/parent/dashboard", serveParentDashboard)
 	r.HandleFunc("/admin/dashboard", serveAdminDashboard)
 	r.HandleFunc("/admin/students", serveStudentManagement)
 	r.HandleFunc("/admin/drivers", serveDriverManagement)
-	r.HandleFunc("/admin/fleet", serveFleetManagement)
+	r.HandleFunc("/admin/fleet-management", serveFleetManagement)
 
 	// Start server
 	port := os.Getenv("PORT")

@@ -18,7 +18,7 @@ class ParentDashboard {
     initializeHereMaps() {
         // Initialize HERE Maps platform
         this.platform = new H.service.Platform({
-            'apikey': process.env.HERE_API_KEY
+            'apikey': 'zx-6o_i0Sv59n9kKgKKmHGvNpbzERdnZ0ZxkI6KEyug'
         });
 
         const defaultLayers = this.platform.createDefaultLayers();
@@ -43,18 +43,28 @@ class ParentDashboard {
 
     initializeWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.websocket = new WebSocket(`${protocol}//${window.location.host}/ws/parent`);
-
+        this.websocket = new WebSocket(`${protocol}//${window.location.host}/api/ws`);
+        
         this.websocket.onopen = () => {
-            console.log('WebSocket connection established');
-            this.updateConnectionStatus(true);
+            console.log('WebSocket connection established for parent dashboard');
+            // Send parent authentication
+            if (this.parentId) {
+                this.websocket.send(JSON.stringify({
+                    type: 'authenticate',
+                    userType: 'parent',
+                    userId: this.parentId
+                }));
+            }
         };
 
         this.websocket.onclose = () => {
             console.log('WebSocket connection closed');
-            this.updateConnectionStatus(false);
             // Attempt to reconnect after 5 seconds
             setTimeout(() => this.initializeWebSocket(), 5000);
+        };
+
+        this.websocket.onerror = (error) => {
+            console.error('WebSocket error:', error);
         };
 
         this.websocket.onmessage = (event) => {

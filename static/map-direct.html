@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Direct HERE Map Test</title>
+    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        .page-wrapper { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        #map {
+            width: 100%;
+            height: 500px;
+            background: #e0e0e0;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .panel {
+            background: #f8f8f8;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 { margin-top: 0; color: #333; }
+        .status { margin: 10px 0; font-weight: bold; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+
+<body>
+    <div class="page-wrapper">
+        <div class="panel">
+            <h1>Direct HERE Map Test</h1>
+            <p>This page tests the HERE Maps API with a directly embedded API key</p>
+            <div class="status" id="status">Loading map...</div>
+        </div>
+        
+        <div id="map"></div>
+        
+        <div class="panel">
+            <h3>Debug Information</h3>
+            <pre id="debug"></pre>
+        </div>
+    </div>
+
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-core.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-service.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-ui.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" type="text/javascript" charset="utf-8"></script>
+    
+    <script>
+        // Debug helper
+        function log(message, isError) {
+            console.log(message);
+            const debug = document.getElementById('debug');
+            const status = document.getElementById('status');
+            
+            if (debug) {
+                const timestamp = new Date().toLocaleTimeString();
+                debug.innerHTML += `[${timestamp}] ${message}\n`;
+            }
+            
+            if (isError && status) {
+                status.textContent = message;
+                status.className = 'status error';
+            } else if (!isError && status) {
+                status.textContent = message;
+                status.className = 'status success';
+            }
+        }
+        
+        try {
+            log("Starting map initialization");
+            
+            // Check if HERE API is available
+            if (typeof H === 'undefined') {
+                log("ERROR: HERE Maps API not loaded!", true);
+                throw new Error("HERE Maps API not loaded");
+            }
+            
+            log("HERE Maps API loaded successfully");
+            
+            // Initialize the platform object
+            var platform = new H.service.Platform({
+                'apikey': 'zx-6o_i0Sv59n9kKgKKmHGvNpbzERdnZ0ZxkI6KEyug'
+            });
+            
+            log("Platform initialized");
+
+            // Get default layers
+            var defaultLayers = platform.createDefaultLayers();
+            log("Default layers created");
+
+            // Get map element
+            const mapElement = document.getElementById('map');
+            log(`Map container dimensions: ${mapElement.offsetWidth}x${mapElement.offsetHeight}`);
+
+            // Initialize a map
+            var map = new H.Map(
+                mapElement,
+                defaultLayers.vector.normal.map,
+                {
+                    zoom: 10,
+                    center: { lat: -1.292066, lng: 36.821945 } // Nairobi
+                }
+            );
+            
+            log("Map created successfully");
+
+            // Add an event listener to resize the map when the window is resized
+            window.addEventListener('resize', function () {
+                map.getViewPort().resize();
+                log("Map resized due to window resize");
+            });
+
+            // Make the map interactive
+            var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
+            log("Map behavior (interactions) initialized");
+
+            // Create the default UI
+            var ui = H.ui.UI.createDefault(map, defaultLayers);
+            log("UI controls initialized");
+
+            // Add a marker
+            var marker = new H.map.Marker({ lat: -1.292066, lng: 36.821945 });
+            map.addObject(marker);
+            log("Marker added to the map");
+            
+            log("Map fully initialized and ready!", false);
+        } catch (error) {
+            log("ERROR initializing map: " + error.message, true);
+        }
+    </script>
+</body>
+</html>

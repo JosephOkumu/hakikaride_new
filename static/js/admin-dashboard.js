@@ -15,7 +15,7 @@ class AdminDashboard {
 
     initializeHereMaps() {
         this.platform = new H.service.Platform({
-            'apikey': process.env.HERE_API_KEY
+            'apikey': 'zx-6o_i0Sv59n9kKgKKmHGvNpbzERdnZ0ZxkI6KEyug'
         });
 
         const defaultLayers = this.platform.createDefaultLayers();
@@ -40,22 +40,42 @@ class AdminDashboard {
 
     initializeWebSocket() {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        this.websocket = new WebSocket(`${protocol}//${window.location.host}/ws/admin`);
-
-        this.websocket.onopen = () => {
-            console.log('Admin WebSocket connection established');
-            this.loadActiveFleet();
-        };
-
-        this.websocket.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            this.handleWebSocketMessage(data);
-        };
-
-        this.websocket.onclose = () => {
-            console.log('WebSocket connection closed');
-            setTimeout(() => this.initializeWebSocket(), 5000);
-        };
+        try {
+            console.log('Connecting to WebSocket at ' + `${protocol}//${window.location.host}/api/ws`);
+            this.websocket = new WebSocket(`${protocol}//${window.location.host}/api/ws`);
+            
+            this.websocket.onopen = () => {
+                console.log('WebSocket connection established for admin dashboard');
+                
+                // Send admin authentication
+                this.websocket.send(JSON.stringify({
+                    type: 'authenticate',
+                    userType: 'admin',
+                    userId: this.adminId || 1
+                }));
+            };
+    
+            this.websocket.onclose = () => {
+                console.log('WebSocket connection closed');
+                // Attempt to reconnect after 5 seconds
+                setTimeout(() => this.initializeWebSocket(), 5000);
+            };
+    
+            this.websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            this.websocket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    this.handleWebSocketMessage(data);
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                }
+            };
+        } catch (error) {
+            console.error('Error initializing WebSocket:', error);
+        }
     }
 
     async loadDashboardData() {

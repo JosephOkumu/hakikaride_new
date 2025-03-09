@@ -78,12 +78,60 @@ func (c *Client) readPump() {
 		// Parse the message
 		var msg Message
 		if err := json.Unmarshal(message, &msg); err != nil {
-			log.Printf("error parsing message: %v", err)
+			log.Printf("Error parsing WebSocket message: %v. Raw message: %s", err, string(message))
+			
+			// Send an error response
+			errorResponse := Message{
+				Type: "error",
+				Payload: map[string]interface{}{
+					"message": "Invalid message format",
+					"error": err.Error(),
+				},
+			}
+			
+			errorBytes, err := json.Marshal(errorResponse)
+			if err == nil {
+				c.send <- errorBytes
+			}
 			continue
 		}
 
 		// Handle different message types
 		switch msg.Type {
+		case "authenticate":
+			// Handle authentication with payload format
+			if payload, ok := msg.Payload.(map[string]interface{}); ok {
+				// Try to get userId and userType from payload
+				if userId, ok := payload["userId"]; ok {
+					if id, ok := userId.(float64); ok {
+						c.userID = int64(id)
+					}
+				}
+				
+				if userType, ok := payload["userType"]; ok {
+					if ut, ok := userType.(string); ok {
+						c.userType = ut
+					}
+				}
+			}
+			
+			// Log successful authentication
+			log.Printf("Client authenticated as %s with ID %v", c.userType, c.userID)
+			
+			// Send acknowledgment
+			ack := Message{
+				Type: "authentication_ack",
+				Payload: map[string]interface{}{
+					"success": true,
+					"userType": c.userType,
+					"userId": c.userID,
+				},
+			}
+			
+			ackBytes, err := json.Marshal(ack)
+			if err == nil {
+				c.send <- ackBytes
+			}
 		case "subscribe":
 			if tripID, ok := msg.Payload.(float64); ok {
 				c.hub.SubscribeToTrip(c, int64(tripID))
@@ -92,6 +140,9 @@ func (c *Client) readPump() {
 			if tripID, ok := msg.Payload.(float64); ok {
 				c.hub.UnsubscribeFromTrip(c, int64(tripID))
 			}
+		default:
+			// Log unknown message types
+			log.Printf("Received message of type %s: %v", msg.Type, msg.Payload)
 		}
 	}
 }
