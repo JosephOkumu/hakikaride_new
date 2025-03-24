@@ -29,9 +29,11 @@ CREATE TABLE IF NOT EXISTS Students (
     Grade VARCHAR(50) NOT NULL,
     AdmNumber VARCHAR(50) NOT NULL UNIQUE,
     Address TEXT NOT NULL,
+    RouteID INTEGER,
     EmergencyContact VARCHAR(15),
     IsActive BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (ParentID) REFERENCES Parents(ParentID)
+    FOREIGN KEY (ParentID) REFERENCES Parents(ParentID),
+    FOREIGN KEY (RouteID) REFERENCES Routes(RouteID)
 );
 
 CREATE TABLE IF NOT EXISTS Routes (
