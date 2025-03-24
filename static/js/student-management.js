@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
             grade: document.getElementById('grade').value,
             admNumber: document.getElementById('admNumber').value,
             address: document.getElementById('address').value,
+            route: document.getElementById('route').value,
             emergencyContact: document.getElementById('emergencyContact').value
         };
 
@@ -135,6 +136,7 @@ function renderStudents(students) {
             <td style="${cellStyle}; min-width: 200px;">${student.firstName} ${student.lastName}</td>
             <td style="${cellStyle}">${student.grade}</td>
             <td style="${cellStyle}">${student.address}</td>
+            <td style="${cellStyle}">${student.route || 'Not assigned'}</td>
             <td style="${cellStyle}">${student.emergencyContact}</td>
             <td style="${cellStyle}">
                 <button onclick='editStudent(${JSON.stringify(student).replace(/'/g, "&apos;")})' style="${actionBtnStyle}; background: var(--primary-color); color: white;">
@@ -176,6 +178,7 @@ function editStudent(student) {
     document.getElementById('grade').value = student.grade;
     document.getElementById('admNumber').value = student.admNumber;
     document.getElementById('address').value = student.address;
+    document.getElementById('route').value = student.route || '';
     document.getElementById('emergencyContact').value = student.emergencyContact;
     document.getElementById('parentId').value = student.parentId;
     
