@@ -12,15 +12,16 @@ import (
 )
 
 type Student struct {
-	StudentID        int    `json:"studentId"`
-	ParentID         int    `json:"parentId"`
-	FirstName        string `json:"firstName"`
-	LastName         string `json:"lastName"`
-	Grade           string `json:"grade"`
-	AdmNumber       string `json:"admNumber"`
-	Address         string `json:"address"`
-	EmergencyContact string `json:"emergencyContact"`
-	IsActive        bool   `json:"isActive"`
+StudentID        int    `json:"studentId"`
+ParentID         int    `json:"parentId"`
+FirstName        string `json:"firstName"`
+LastName         string `json:"lastName"`
+Grade           string `json:"grade"`
+AdmNumber       string `json:"admNumber"`
+Address         string `json:"address"`
+RouteID         *int   `json:"route,omitempty"`
+EmergencyContact string `json:"emergencyContact"`
+IsActive        bool   `json:"isActive"`
 }
 
 // HandleAddStudent handles adding a single student
@@ -33,11 +34,11 @@ func HandleAddStudent(db *sql.DB) http.HandlerFunc {
 		}
 
 		result, err := db.Exec(`
-			INSERT INTO Students (ParentID, FirstName, LastName, Grade, AdmNumber, 
-				Address, EmergencyContact, IsActive)
-			VALUES (?, ?, ?, ?, ?, ?, ?, true)`,
-			student.ParentID, student.FirstName, student.LastName, student.Grade,
-			student.AdmNumber, student.Address, student.EmergencyContact)
+		INSERT INTO Students (ParentID, FirstName, LastName, Grade, AdmNumber,
+		Address, RouteID, EmergencyContact, IsActive)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)`,
+		student.ParentID, student.FirstName, student.LastName, student.Grade,
+		student.AdmNumber, student.Address, student.RouteID, student.EmergencyContact)
 		
 		if err != nil {
 			log.Printf("Error adding student: %v", err)
@@ -79,9 +80,9 @@ func HandleBulkUploadStudents(db *sql.DB) http.HandlerFunc {
 		}
 
 		stmt, err := tx.Prepare(`
-			INSERT INTO Students (ParentID, FirstName, LastName, Grade, AdmNumber, 
-				Address, EmergencyContact, IsActive)
-			VALUES (?, ?, ?, ?, ?, ?, ?, true)`)
+		INSERT INTO Students (ParentID, FirstName, LastName, Grade, AdmNumber,
+		Address, RouteID, EmergencyContact, IsActive)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, true)`)
 		if err != nil {
 			tx.Rollback()
 			http.Error(w, "Database error", http.StatusInternalServerError)
@@ -100,14 +101,16 @@ func HandleBulkUploadStudents(db *sql.DB) http.HandlerFunc {
 			}
 
 			parentID, _ := strconv.Atoi(record[0])
+			routeID, _ := strconv.Atoi(record[6])
 			_, err = stmt.Exec(
-				parentID,
-				record[1], // FirstName
-				record[2], // LastName
-				record[3], // Grade
-				record[4], // AdmNumber
-				record[5], // Address
-				record[6]) // EmergencyContact
+			parentID,
+			record[1], // FirstName
+			record[2], // LastName
+			record[3], // Grade
+			record[4], // AdmNumber
+			record[5], // Address
+			routeID,   // RouteID
+			record[7]) // EmergencyContact
 
 			if err != nil {
 				failed++
@@ -164,13 +167,13 @@ func HandleUpdateStudent(db *sql.DB) http.HandlerFunc {
 
 		// Update student record
 		_, err = tx.Exec(`
-			UPDATE Students 
-			SET FirstName = ?, LastName = ?, Grade = ?, AdmNumber = ?,
-				Address = ?, EmergencyContact = ?, ParentID = ?
-			WHERE StudentID = ?`,
-			student.FirstName, student.LastName, student.Grade, student.AdmNumber,
-			student.Address, student.EmergencyContact, student.ParentID,
-			student.StudentID)
+		UPDATE Students
+		SET FirstName = ?, LastName = ?, Grade = ?, AdmNumber = ?,
+		Address = ?, RouteID = ?, EmergencyContact = ?, ParentID = ?
+		WHERE StudentID = ?`,
+		student.FirstName, student.LastName, student.Grade, student.AdmNumber,
+		student.Address, student.RouteID, student.EmergencyContact, student.ParentID,
+		student.StudentID)
 
 		if err != nil {
 			tx.Rollback()
@@ -248,11 +251,11 @@ func HandleDeleteStudent(db *sql.DB) http.HandlerFunc {
 func HandleListStudents(db *sql.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		rows, err := db.Query(`
-			SELECT StudentID, ParentID, FirstName, LastName, Grade, AdmNumber,
-				   Address, EmergencyContact
-			FROM Students
-			WHERE IsActive = true
-			ORDER BY Grade, LastName, FirstName`)
+		SELECT StudentID, ParentID, FirstName, LastName, Grade, AdmNumber,
+		   Address, RouteID, EmergencyContact
+		FROM Students
+		WHERE IsActive = true
+		ORDER BY Grade, LastName, FirstName`)
 		if err != nil {
 			log.Printf("Error getting students: %v", err)
 			http.Error(w, "Error getting students list", http.StatusInternalServerError)
@@ -264,7 +267,7 @@ func HandleListStudents(db *sql.DB) http.HandlerFunc {
 		for rows.Next() {
 			var s Student
 			err := rows.Scan(&s.StudentID, &s.ParentID, &s.FirstName, &s.LastName,
-				&s.Grade, &s.AdmNumber, &s.Address, &s.EmergencyContact)
+			&s.Grade, &s.AdmNumber, &s.Address, &s.RouteID, &s.EmergencyContact)
 			if err != nil {
 				continue
 			}
